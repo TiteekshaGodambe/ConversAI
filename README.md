@@ -8,12 +8,9 @@
 > with expected answers, and offline benchmark steps are in **[docs/EVALUATION.md](docs/EVALUATION.md)**.
 
 Ask a business question in natural language from any MCP client (GitHub Copilot in VS Code, Gemini CLI, Claude
-Desktop). The LLM never writes SQL: it calls governed MCP tools and resolves the question to metrics and dimensions
-defined once in a semantic layer (dbt MetricFlow). The semantic query is compiled deterministically, transpiled to
-the SQL dialect of the connected source (BigQuery, a Cloud Storage data lake, DuckDB, Oracle), checked for safety
-and cost, and executed only after the user approves it.
-
-Built for the Google Cloud **AI Builder Cup**.
+Desktop). The LLM never writes SQL: it calls MCP tools and resolves the question to metrics and dimensions
+defined once in a semantic layer using MetricFlow. The semantic query is compiled deterministically, transpiled to
+the SQL dialect of the connected source (BigQuery, a Cloud Storage data lake, DuckDB, Oracle), checked for safety, and executed only after the user approves it.
 
 ![Architecture](docs/architecture.png)
 
