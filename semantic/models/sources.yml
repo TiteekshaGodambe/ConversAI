@@ -1,0 +1,8 @@
+sources:
+  - name: cards
+    schema: main
+    tables:
+      - name: ACCOUNT_DIM
+        description: One row per credit card account (account-level columns of CARD_ACCOUNT_SYNTHETIC)
+      - name: ACCOUNT_CYCLE_FACT
+        description: One row per account per monthly billing cycle (cycle-level columns)

@@ -1,0 +1,80 @@
+# Where each logical semantic model physically lives, per query engine.
+# The semantic layer (semantic/models/*.yml) never changes when you add a target:
+# only this file does. Logical names = the dbt model names:
+#   account                -> ACCOUNT_DIM
+#   account_cycle          -> ACCOUNT_CYCLE_FACT
+#   metricflow_time_spine  -> one row per day (date_day); MetricFlow joins it for
+#                             month-over-month metrics. Generated inline, so no table is needed.
+default_target: warehouse
+
+targets:
+  warehouse:                       # local DuckDB database file (stand-in for a warehouse)
+    kind: duckdb
+    dialect: duckdb
+    path: warehouse/cards.duckdb
+    tables:
+      account: main.ACCOUNT_DIM
+      account_cycle: main.ACCOUNT_CYCLE_FACT
+      metricflow_time_spine: "(SELECT CAST(range AS DATE) AS date_day FROM range(DATE '2015-01-01', DATE '2031-01-01', INTERVAL 1 DAY))"
+
+  lake:                            # Parquet files queried in place (stand-in for a data lake)
+    kind: duckdb
+    dialect: duckdb
+    path: ":memory:"
+    tables:
+      account: "read_parquet('lake/cards/account_dim/*.parquet')"
+      account_cycle: "read_parquet('lake/cards/account_cycle_fact/*.parquet')"
+      metricflow_time_spine: "(SELECT CAST(range AS DATE) AS date_day FROM range(DATE '2015-01-01', DATE '2031-01-01', INTERVAL 1 DAY))"
+
+  oracle:                          # Oracle (e.g. the adb-free container); credentials from env vars
+    kind: oracle
+    dialect: oracle
+    dsn_env: ORACLE_DSN            # e.g. localhost:1521/myatp_low.adb.oraclecloud.com
+    user_env: ORACLE_USER
+    password_env: ORACLE_PASSWORD
+    tables:
+      account: ACCOUNT_DIM
+      account_cycle: ACCOUNT_CYCLE_FACT
+      metricflow_time_spine: "(SELECT DATE '2015-01-01' + LEVEL - 1 AS date_day FROM dual CONNECT BY LEVEL <= 5844)"
+
+  bigquery:                        # the source tables loaded into BigQuery (python tables/load_bigquery.py)
+    kind: bigquery
+    dialect: bigquery
+    project_env: GCP_PROJECT       # {project} below is replaced with this env var
+    location: US                   # keep the same as exports.bigquery.location
+    max_bytes_billed: 10737418240
+    tables:
+      account: "`{project}.conversai_source.ACCOUNT_DIM`"
+      account_cycle: "`{project}.conversai_source.ACCOUNT_CYCLE_FACT`"
+      metricflow_time_spine: "(SELECT date_day FROM UNNEST(GENERATE_DATE_ARRAY(DATE '2015-01-01', DATE '2030-12-31')) AS date_day)"
+
+  gcs_lake:                        # the lake's Parquet files on Cloud Storage, queried in place by BigQuery
+    kind: bigquery                 # (external tables; python tables/load_bigquery.py --lake)
+    dialect: bigquery
+    project_env: GCP_PROJECT
+    location: US
+    max_bytes_billed: 10737418240
+    tables:
+      account: "`{project}.conversai_lake.ACCOUNT_DIM`"
+      account_cycle: "`{project}.conversai_lake.ACCOUNT_CYCLE_FACT`"
+      metricflow_time_spine: "(SELECT date_day FROM UNNEST(GENERATE_DATE_ARRAY(DATE '2015-01-01', DATE '2030-12-31')) AS date_day)"
+
+# ----------------------------------------------------------------------------------------------
+# Exports: "give me this data so I can analyse it myself". An export copies the governed columns
+# (the ones the semantic layer uses, plus extra_columns) for a scope (months, account segment)
+# from a source target to a destination, and registers the copy as a new target. Follow-up
+# questions then run on the copy only; the source is not touched again.
+exports:
+  destination: local               # local = Parquet files in exports/ (no cloud needed); bigquery = Google BigQuery
+  max_rows: 5000000                # refuse larger exports
+  extra_columns:                   # also exported, though no metric uses them (useful for own analysis)
+    account: [BILLING_CYCLE_DAY]
+    account_cycle: [BILLING_YEAR_MTH]
+  bigquery:
+    project_env: GCP_PROJECT       # set GCP_PROJECT=<your project id>
+    dataset: conversai_exports     # created if missing
+    location: US
+    expiration_days: 7             # exported tables delete themselves after this many days (0 = never)
+    max_bytes_billed: 10737418240  # 10 GB cap per follow-up query
+  local:
+    dir: exports

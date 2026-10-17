@@ -1,0 +1,190 @@
+# Gold answers for eval/questions.yaml.
+#
+# For each question:
+#   queries - the semantic query (or queries) a correct answer maps to: governed names only.
+#   checks  - an INDEPENDENT hand-written DuckDB SQL per query, straight on the physical tables,
+#             not using the semantic layer. Columns in the same order as the semantic result
+#             (group_by first, then metrics).
+#   ordered - compare row order too (questions that ask for a ranking / sequence).
+#   optional - (LLM mode) gold metrics a correct answer may leave out because the question
+#             does not ask for them.
+# eval/run_eval.py runs both and compares them, on every target.
+#
+# Shorthand expanded by the runner inside checks:
+#   {F}       ACCOUNT_CYCLE_FACT
+#   {D}       ACCOUNT_DIM
+#   {LATEST}  each account's latest cycle:
+#             (SELECT * FROM ACCOUNT_CYCLE_FACT QUALIFY ROW_NUMBER() OVER
+#              (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE DESC) = 1)
+#   {ACTIVE}  WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0
+#
+# Interpretations (the business rules the layer encodes):
+#   point-in-time questions use each account's latest cycle (Sep 2026 for open accounts);
+#   "last month" / "last cycle" = Sep 2026 (metric_time__month = 2026-09-01);
+#   "last quarter" = Jul-Sep 2026; "paperless" = any e-bill code (EBILL_IND not blank);
+#   delinquency rates exclude charged-off accounts from numerator and denominator.
+
+gold:
+  E1:
+    queries: [{metrics: [accounts]}]
+    checks: ["SELECT COUNT(*) FROM {D}"]
+  E2:
+    queries: [{metrics: [total_balance]}]
+    checks: ["SELECT SUM(CURR_MNTH_BALANCE_AMT) FROM {LATEST}"]
+  E3:
+    queries: [{metrics: [avg_bureau_score]}]
+    checks: ["SELECT AVG(BUREAU_SCORE) FROM {LATEST}"]
+  E4:
+    queries: [{metrics: [accounts], where: [{dimension: account__paperless, op: "=", value: "Y"}]}]
+    checks: ["SELECT COUNT(*) FROM {D} WHERE EBILL_IND IS NOT NULL"]
+  E5:
+    queries: [{metrics: [accounts], group_by: [account__internal_status_desc]}]
+    checks: ["SELECT CASE INTERNAL_STATUS WHEN 'D' THEN 'Delinquent' WHEN 'N' THEN 'Credit Balance'
+              WHEN 'O' THEN 'Overlimit' WHEN 'X' THEN 'Delinquent & Overlimit' ELSE 'Normal' END, COUNT(*)
+              FROM {D} GROUP BY 1"]
+  E6:
+    queries: [{metrics: [late_fee_revenue], where: [{dimension: metric_time__month, op: "=", value: "2026-09-01"}]}]
+    checks: ["SELECT SUM(LATE_CHARGE_ASSESSED) FROM {F} WHERE BILLING_YEAR_MTH = 202609"]
+  E7:
+    queries: [{metrics: [total_balance], group_by: [metric_time__month], order_by: [metric_time__month]}]
+    checks: ["SELECT DATE_TRUNC('month', BILLING_CYCLE_DATE), SUM(CURR_MNTH_BALANCE_AMT) FROM {F} GROUP BY 1 ORDER BY 1"]
+    ordered: true
+  E8:
+    queries: [{metrics: [avg_purchase_apr]}]
+    checks: ["SELECT AVG(LAST_MRCH_APR) FROM {LATEST}"]
+
+  M1:
+    queries: [{metrics: [utilization_rate], group_by: [account__internal_status_desc]}]
+    checks: ["SELECT CASE d.INTERNAL_STATUS WHEN 'D' THEN 'Delinquent' WHEN 'N' THEN 'Credit Balance'
+              WHEN 'O' THEN 'Overlimit' WHEN 'X' THEN 'Delinquent & Overlimit' ELSE 'Normal' END,
+              SUM(l.CURR_MNTH_BALANCE_AMT) / NULLIF(SUM(l.CREDIT_LIMIT_AMT), 0)
+              FROM {LATEST} l JOIN {D} d USING (ACCOUNT_KEY) GROUP BY 1"]
+  M2:
+    queries: [{metrics: [total_past_due], group_by: [account_cycle__delinquency_bucket]}]
+    checks: ["SELECT CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN '0 Current' WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN '1 30-59 DPD'
+              WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN '2 60-89 DPD' WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN '3 90-119 DPD'
+              WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN '4 120-179 DPD' ELSE '5 180+ DPD' END, SUM(TOTAL_PAST_DUE_AMT)
+              FROM {LATEST} GROUP BY 1"]
+  M3:
+    queries: [{metrics: [accounts], group_by: [account_cycle__bureau_score_band],
+               where: [{dimension: metric_time__month, op: "=", value: "2026-09-01"}]}]
+    checks: ["SELECT CASE WHEN BUREAU_SCORE < 580 THEN '1 <580' WHEN BUREAU_SCORE < 670 THEN '2 580-669'
+              WHEN BUREAU_SCORE < 740 THEN '3 670-739' ELSE '4 740+' END, COUNT(DISTINCT ACCOUNT_KEY)
+              FROM {F} WHERE BILLING_YEAR_MTH = 202609 GROUP BY 1"]
+  M4:
+    queries: [{metrics: [payment_rate], group_by: [account__paperless]}]
+    checks: ["SELECT CASE WHEN d.EBILL_IND IS NULL THEN 'N' ELSE 'Y' END, SUM(f.PYMT_AMT) / SUM(f.CURR_MNTH_BALANCE_AMT)
+              FROM {F} f JOIN {D} d USING (ACCOUNT_KEY) GROUP BY 1"]
+  M5:
+    queries: [{metrics: [dq30_rate], group_by: [account__external_status_desc]}]
+    checks: ["SELECT CASE d.EXTERNAL_STATUS WHEN 'C' THEN 'Closed' WHEN 'E' THEN 'Revoked' WHEN 'F' THEN 'Frozen'
+              WHEN 'I' THEN 'Interest Accrual Prohibited' WHEN 'L' THEN 'Lost' WHEN 'U' THEN 'Stolen'
+              WHEN 'Z' THEN 'Charged Off' ELSE 'Normal' END,
+              COUNT(CASE WHEN {ACTIVE} AND NBR_DAYS_DELQ_AT_CYC >= 30 THEN 1 END) * 1.0 / NULLIF(COUNT(CASE WHEN {ACTIVE} THEN 1 END), 0)
+              FROM {LATEST} l JOIN {D} d USING (ACCOUNT_KEY) GROUP BY 1"]
+  M6:
+    queries: [{metrics: [avg_open_to_buy],
+               where: [{dimension: account_cycle__behavior_score, op: "<", value: 600},
+                       {dimension: metric_time__month, op: "=", value: "2026-09-01"}]}]
+    checks: ["SELECT AVG(OPEN_TO_BUY_AMT) FROM {F} WHERE BEHAVIOR_SCORE < 600 AND BILLING_YEAR_MTH = 202609"]
+  M7:
+    queries: [{metrics: [total_chargeoffs], group_by: [account__bankruptcy_code]}]
+    checks: ["SELECT d.BANKRUPTCY_CODE, SUM(f.WRITEOFF_AMT) FROM {F} f JOIN {D} d USING (ACCOUNT_KEY) GROUP BY 1"]
+  M8:
+    queries: [{metrics: [high_util_balance_share]}]
+    checks: ["SELECT SUM(CASE WHEN CREDIT_LIMIT_AMT > 0 AND CURR_MNTH_BALANCE_AMT > 0.8 * CREDIT_LIMIT_AMT
+              THEN CURR_MNTH_BALANCE_AMT ELSE 0 END) / SUM(CURR_MNTH_BALANCE_AMT) FROM {LATEST}"]
+
+  H1:
+    optional: [dq30_rate]          # the change alone answers the question; the rate itself is a bonus
+    queries: [{metrics: [dq30_rate, dq30_rate_mom_change], group_by: [metric_time__month], order_by: [metric_time__month]}]
+    checks: ["WITH m AS (SELECT DATE_TRUNC('month', BILLING_CYCLE_DATE) mon,
+              COUNT(CASE WHEN {ACTIVE} AND NBR_DAYS_DELQ_AT_CYC >= 30 THEN 1 END) * 1.0 / COUNT(CASE WHEN {ACTIVE} THEN 1 END) r
+              FROM {F} GROUP BY 1)
+              SELECT mon, r, r - LAG(r) OVER (ORDER BY mon) FROM m ORDER BY mon"]
+    ordered: true
+  H2:
+    note: Two queries - the breakdown, then the portfolio figure to compare against.
+    queries:
+      - {metrics: [chargeoff_rate], group_by: [account__internal_status_desc], order_by: [-chargeoff_rate]}
+      - {metrics: [chargeoff_rate]}
+    checks:
+      - "SELECT CASE d.INTERNAL_STATUS WHEN 'D' THEN 'Delinquent' WHEN 'N' THEN 'Credit Balance'
+         WHEN 'O' THEN 'Overlimit' WHEN 'X' THEN 'Delinquent & Overlimit' ELSE 'Normal' END,
+         SUM(f.WRITEOFF_AMT) / SUM(f.CURR_MNTH_BALANCE_AMT) FROM {F} f JOIN {D} d USING (ACCOUNT_KEY) GROUP BY 1 ORDER BY 2 DESC"
+      - "SELECT SUM(WRITEOFF_AMT) / SUM(CURR_MNTH_BALANCE_AMT) FROM {F}"
+    ordered: false          # several statuses tie at 0; the ranking is the ORDER BY itself
+  H3:
+    queries: [{metrics: [paid_minimum_rate],
+               where: [{dimension: account_cycle__bureau_score, op: "<", value: 620},
+                       {dimension: account_cycle__utilization_band, op: "=", value: "3 >80%"},
+                       {dimension: metric_time__month, op: "=", value: "2026-09-01"}]}]
+    checks: ["WITH c AS (SELECT *, LAG(MIN_PYMT_AMT) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) prev_min FROM {F})
+              SELECT COUNT(CASE WHEN prev_min > 0 AND PYMT_AMT >= prev_min THEN 1 END) * 1.0 / COUNT(CASE WHEN prev_min > 0 THEN 1 END)
+              FROM c WHERE BILLING_YEAR_MTH = 202609 AND BUREAU_SCORE < 620
+                AND CREDIT_LIMIT_AMT > 0 AND CURR_MNTH_BALANCE_AMT > 0.8 * CREDIT_LIMIT_AMT"]
+  H4:
+    queries: [{metrics: [balance_weighted_apr], group_by: [account_cycle__bureau_score_band]}]
+    checks: ["SELECT CASE WHEN BUREAU_SCORE < 580 THEN '1 <580' WHEN BUREAU_SCORE < 670 THEN '2 580-669'
+              WHEN BUREAU_SCORE < 740 THEN '3 670-739' ELSE '4 740+' END,
+              SUM(LAST_MRCH_APR * GREATEST(CURR_MNTH_BALANCE_AMT, 0)) / SUM(GREATEST(CURR_MNTH_BALANCE_AMT, 0))
+              FROM {LATEST} GROUP BY 1"]
+  H5:
+    queries: [{metrics: [total_net_sales, cash_advance_share], group_by: [metric_time__month],
+               order_by: [-total_net_sales], limit: 3}]
+    checks: ["SELECT DATE_TRUNC('month', BILLING_CYCLE_DATE), SUM(NET_SALES), SUM(CASH_ADV_AMT) / (SUM(NET_SALES) + SUM(CASH_ADV_AMT))
+              FROM {F} GROUP BY 1 ORDER BY 2 DESC LIMIT 3"]
+    ordered: true
+  H6:
+    optional: [accounts]           # the question asks only for the two averages
+    queries: [{metrics: [accounts, avg_behavior_score, avg_days_past_due],
+               where: [{dimension: account__writeoff_date__day, op: ">=", value: "2025-10-01"}]}]
+    checks: ["SELECT COUNT(*), AVG(l.BEHAVIOR_SCORE), AVG(l.NBR_DAYS_DELQ_AT_CYC)
+              FROM {LATEST} l JOIN {D} d USING (ACCOUNT_KEY) WHERE d.WRITEOFF_DATE >= DATE '2025-10-01'"]
+  H7:
+    queries: [{metrics: [dq30_rate, payment_rate, utilization_rate], group_by: [account__paperless],
+               where: [{dimension: metric_time__quarter, op: "=", value: "2026-07-01"}]}]
+    checks: ["WITH q AS (SELECT * FROM {F} WHERE BILLING_CYCLE_DATE >= DATE '2026-07-01' AND BILLING_CYCLE_DATE < DATE '2026-10-01'),
+              l AS (SELECT * FROM q QUALIFY ROW_NUMBER() OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE DESC) = 1),
+              d AS (SELECT ACCOUNT_KEY, CASE WHEN EBILL_IND IS NULL THEN 'N' ELSE 'Y' END p FROM {D}),
+              s AS (SELECT d.p, COUNT(CASE WHEN {ACTIVE} AND NBR_DAYS_DELQ_AT_CYC >= 30 THEN 1 END) * 1.0 / COUNT(CASE WHEN {ACTIVE} THEN 1 END) dq,
+                           SUM(CURR_MNTH_BALANCE_AMT) / SUM(CREDIT_LIMIT_AMT) util
+                    FROM l JOIN d USING (ACCOUNT_KEY) GROUP BY 1),
+              f AS (SELECT d.p, SUM(PYMT_AMT) / SUM(CURR_MNTH_BALANCE_AMT) pr FROM q JOIN d USING (ACCOUNT_KEY) GROUP BY 1)
+              SELECT s.p, dq, pr, util FROM s JOIN f USING (p)"]
+  H8:
+    note: Roll rate current -> 30+, answerable through prior_delinquency_bucket (LAG over the account's cycles).
+    queries: [{metrics: [dq30_rate],
+               where: [{dimension: account_cycle__prior_delinquency_bucket, op: "=", value: "0 Current"},
+                       {dimension: metric_time__month, op: "=", value: "2026-09-01"}]}]
+    checks: ["WITH c AS (SELECT *, LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) prev_dpd FROM {F})
+              SELECT COUNT(CASE WHEN {ACTIVE} AND NBR_DAYS_DELQ_AT_CYC >= 30 THEN 1 END) * 1.0 / COUNT(CASE WHEN {ACTIVE} THEN 1 END)
+              FROM c WHERE BILLING_YEAR_MTH = 202609 AND prev_dpd < 30"]
+
+  H9:
+    note: Score up but delinquency not better (same or worse bucket) at the Sep 2026 cycle, vs the previous cycle.
+    queries: [{metrics: [accounts],
+               where: [{dimension: account_cycle__behavior_score_trend, op: "=", value: "Improved"},
+                       {dimension: account_cycle__delinquency_trend, op: "in", value: [Same, Worsened]},
+                       {dimension: metric_time__month, op: "=", value: "2026-09-01"}]}]
+    checks: ["WITH b AS (SELECT *, CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN 0 WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN 1 WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN 2 WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN 3 WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN 4 ELSE 5 END AS bk FROM {F}),
+              c AS (SELECT *, LAG(BEHAVIOR_SCORE) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) prev_bs,
+                              LAG(bk) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) prev_bk FROM b)
+              SELECT COUNT(DISTINCT ACCOUNT_KEY) FROM c
+              WHERE BILLING_YEAR_MTH = 202609 AND BEHAVIOR_SCORE > prev_bs AND bk >= prev_bk"]
+  H10:
+    note: Accounts that rolled to a worse bucket in Sep 2026, by how their behavior score moved.
+    queries: [{metrics: [accounts], group_by: [account_cycle__behavior_score_trend],
+               where: [{dimension: account_cycle__delinquency_trend, op: "=", value: "Worsened"},
+                       {dimension: metric_time__month, op: "=", value: "2026-09-01"}]}]
+    checks: ["WITH b AS (SELECT *, CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN 0 WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN 1 WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN 2 WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN 3 WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN 4 ELSE 5 END AS bk FROM {F}),
+              c AS (SELECT *, LAG(BEHAVIOR_SCORE) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) prev_bs,
+                              LAG(bk) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) prev_bk FROM b)
+              SELECT CASE WHEN BEHAVIOR_SCORE > prev_bs THEN 'Improved' WHEN BEHAVIOR_SCORE < prev_bs THEN 'Worsened' ELSE 'Same' END t,
+                     COUNT(DISTINCT ACCOUNT_KEY)
+              FROM c WHERE BILLING_YEAR_MTH = 202609 AND bk > prev_bk GROUP BY 1"]
+
+  # Guardrails: no gold query. In LLM mode the model must set cannot_answer_reason.
+  G1: {expect_cannot_answer: true}
+  G2: {expect_cannot_answer: true}
+  G3: {expect_cannot_answer: true}

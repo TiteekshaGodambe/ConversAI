@@ -1,0 +1,16 @@
+sl/
+.venv/
+__pycache__/
+.pytest_cache/
+warehouse/
+lake/
+exports/
+semantic/target/
+semantic/logs/
+eval/results_*.csv
+tables/split_report_*.csv
+proposals/
+.vscode/mcp.local.json
+*.duckdb
+.env
+semantic/.user.yml

@@ -1,0 +1,11 @@
+{
+  "servers": {
+    "conversai-local": {
+      "type": "stdio",
+      "command": "C:\\path\\to\\conversai\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\path\\to\\conversai\\mcp_server.py"],
+      "cwd": "C:\\path\\to\\conversai",
+      "env": { "PYTHONUTF8": "1" }
+    }
+  }
+}

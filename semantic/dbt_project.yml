@@ -1,0 +1,4 @@
+name: conversai
+version: "1.0"
+profile: conversai
+model-paths: ["models"]

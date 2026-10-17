@@ -1,0 +1,223 @@
+n,column,oracle_type,description
+1,ACCOUNT_GROUP_ID,VARCHAR2(13),Identifier for the group/portfolio this account belongs to.
+2,ACCOUNT_HISTORY_KEY,NUMBER,Surrogate key for a historical snapshot row of this account.
+3,ACCOUNT_KEY,NUMBER,Unique surrogate key identifying the credit card account. Primary join key for this table.
+4,AGENT,VARCHAR2(20),Code or name of the servicing/collections agent associated with the account.
+5,AMT_TOTAL_AUTH,"NUMBER(15,2)",Total dollar amount of transactions authorized on the account.
+6,APPLICATION_KEY,NUMBER,Surrogate key linking the account back to its original credit application.
+7,AVOID_FINANCE_CHARGES_AMT,"NUMBER(20,2)",Amount the cardholder would need to pay to avoid finance charges this cycle.
+8,BANKRUPTCY_CODE,VARCHAR2(1),"Single-character code indicating bankruptcy status of the account (e.g. filed, discharged, none)."
+9,BANKRUPTCY_FILING_DATE,DATE,"Date the cardholder's bankruptcy was filed, if applicable."
+10,BANKRUPTCY_SCORE,NUMBER(3),Bureau-derived score estimating bankruptcy risk for the account.
+11,BANKRUPTCY_SCORE_DATE,DATE,Date the bankruptcy score was calculated.
+12,BANKRUPTCY_SCORE_REASON_1,VARCHAR2(20),Primary reason code explaining the bankruptcy score.
+13,BANKRUPTCY_SCORE_REASON_2,VARCHAR2(20),Second reason code explaining the bankruptcy score.
+14,BANKRUPTCY_SCORE_REASON_3,VARCHAR2(20),Third reason code explaining the bankruptcy score.
+15,BEHAVIOR_SCORE,NUMBER(3),Internal score predicting account behavior (e.g. delinquency risk) based on payment/usage history.
+16,BEHAVIOR_SCORE_CARD_ID,VARCHAR2(20),Identifier of the scorecard model version used to compute the behavior score.
+17,BEHAVIOR_SCORE_DATE,DATE,Date the behavior score was calculated.
+18,BEHAVIOR_SCORE_REASON_CODE_1,VARCHAR2(20),Primary reason code explaining the behavior score.
+19,BEHAVIOR_SCORE_REASON_CODE_2,VARCHAR2(20),Second reason code explaining the behavior score.
+20,BEHAVIOR_SCORE_REASON_CODE_3,VARCHAR2(20),Third reason code explaining the behavior score.
+21,BEHAVIOR_SCORE_REASON_CODE_4,VARCHAR2(20),Fourth reason code explaining the behavior score.
+22,BHS_DELQ_ID,VARCHAR2(5),Billing/history-system delinquency bucket identifier for the account.
+23,BILLING_CYCLE_DATE,DATE,Date of the account's current billing cycle close.
+24,BILLING_CYCLE_DAY,NUMBER(21),Day of the month on which the account's billing cycle closes.
+25,BILLING_CYCLE_KEY,NUMBER,Surrogate key identifying the specific billing cycle record.
+26,BILLING_YEAR_MTH,NUMBER(7),Billing period expressed as YYYYMM.
+27,BILL_CASH_INTEREST_AMT,"NUMBER(15,2)","Interest charged on cash advances, included in this cycle's bill."
+28,BILL_MERCHANDISE_INTEREST_AMT,"NUMBER(15,2)","Interest charged on merchandise/purchase balances, included in this cycle's bill."
+29,BONUS_POINTS_AMT,"NUMBER(15,2)",Rewards/bonus points balance accrued on the account.
+30,BONUS_POINTS_IND,VARCHAR2(1),Flag indicating whether the account participates in a bonus/rewards points program.
+31,BUREAU_SCORE,NUMBER(3),External credit bureau score (e.g. FICO-style) for the account holder.
+32,BUREAU_SCORE_DATE,DATE,Date the bureau score was pulled/calculated.
+33,BUREAU_SCORE_REASON_CODE_1,VARCHAR2(20),Primary bureau-supplied reason code for the credit score.
+34,BUREAU_SCORE_REASON_CODE_2,VARCHAR2(20),Second bureau-supplied reason code for the credit score.
+35,BUREAU_SCORE_REASON_CODE_3,VARCHAR2(20),Third bureau-supplied reason code for the credit score.
+36,BUREAU_SCORE_REASON_CODE_4,VARCHAR2(20),Fourth bureau-supplied reason code for the credit score.
+37,BUREAU_SCORE_REASON_CODE_5,VARCHAR2(2),Fifth bureau-supplied reason code for the credit score.
+38,CASH_ADV_AMT,"NUMBER(15,2)",Total dollar amount of cash advances taken on the account.
+39,CASH_ADV_CREDIT_LINE,NUMBER(17),Portion of the credit limit available for cash advances.
+40,CASH_ADV_FEES,"NUMBER(15,2)",Fees charged for cash advance transactions.
+41,CASH_ADV_PRINCIPAL_AMT,"NUMBER(15,2)",Outstanding principal balance attributable to cash advances.
+42,CASH_ADV_QTY,NUMBER(6),Number of cash advance transactions on the account.
+43,CDCI_LOAD_DATE,DATE,Date this record was loaded into the data warehouse/CDCI feed.
+44,CLIENT_ID,VARCHAR2(20),Business identifier of the client/customer who owns the account.
+45,CLIENT_KEY,NUMBER,"Surrogate key identifying the client/customer record, for joining to a customer/client dimension table."
+46,CRDT_BUREAU_SPCL_CMNT_CODE,VARCHAR2(2),Credit bureau special-comment code (consumer statement/dispute flag) reported for the account.
+47,CREDIT_BUREAU_FLAG,VARCHAR2(1),Flag indicating whether this account is reported to the credit bureau.
+48,CREDIT_BUREAU_MONITOR_CODE,VARCHAR2(1),Code indicating the account's credit bureau monitoring status.
+49,CREDIT_LIFE_CHARGE_AMT,"NUMBER(15,2)",Charge amount for optional credit life insurance on the account.
+50,CREDIT_LIMIT_AMT,NUMBER(16),"Approved total credit limit for the account, in USD."
+51,CREDIT_LIMIT_CHANGE_TYPE,VARCHAR2(1),"Code describing the type of the most recent credit limit change (e.g. increase, decrease, manual review)."
+52,CURRENT_ACCOUNT_NBR,VARCHAR2(20),Current (possibly reissued) account number for the card.
+53,CURRENT_DUE_FLAG,VARCHAR2(1),Flag indicating whether the account currently has an amount due.
+54,CURRENT_RECENCY_NBR,NUMBER(6),Number of cycles since the account's most recent activity/payment.
+55,CURR_MNTH_BALANCE_AMT,"NUMBER(19,4)","Current month's outstanding account balance, in USD."
+56,CYCLE_BALANCE_QTY,NUMBER(6),Count of billing cycles that have carried a balance.
+57,DELQ_DATE,DATE,Date the account first became delinquent in its current delinquency episode.
+58,DEP_STRATEGY_ID,VARCHAR2(4),Identifier of the deposit/collections strategy applied to the account.
+59,DUE_36_PROFILE,VARCHAR2(37),"36-month history profile string of amounts/status due, one position per period."
+60,EBILL_IND,VARCHAR2(1),Flag indicating whether the cardholder is enrolled in electronic billing (paperless statements).
+61,EXTERNAL_STATUS,VARCHAR2(1),Account status code as reported externally (e.g. to the credit bureau).
+62,EXTERNAL_STATUS_REASON_CODE,VARCHAR2(20),Reason code explaining the externally reported account status.
+63,FDR_RECORD_FORMAT,NUMBER(4),Record format/version code from the source processing system (FDR).
+64,FINANCE_CHARGES_PAID,"NUMBER(15,2)",Total finance charges paid by the cardholder to date.
+65,FINANCE_CHARGE_AMT_BILLED_TOT,"NUMBER(15,2)",Total finance charges billed on the account.
+66,FINANCE_CHARGE_AMT_ON_CASH_ADV,"NUMBER(15,2)",Finance charges billed specifically on cash advance balances.
+67,FINANCE_CHARGE_RATE,NUMBER(7),Interest rate (APR) applied to compute finance charges on the account.
+68,FINANCIAL_ACTIVE_STATUS,VARCHAR2(1),Code indicating whether the account is financially active (has a balance/activity) or dormant.
+69,GRACE_DAY_ID,VARCHAR2(2),Identifier for the grace period rule (number of interest-free days) applied to the account.
+70,GROSS_SALES,"NUMBER(15,2)",Total gross purchase amount charged to the account before returns/adjustments.
+71,INSTALLMENT_PYMT_DUE,"NUMBER(15,2)",Amount due this cycle under an installment/deferred payment plan.
+72,INTERNAL_STATUS,VARCHAR2(1),Internal account status code used by the servicing system (distinct from EXTERNAL_STATUS).
+73,LAST_BONUS_STRATEGY,VARCHAR2(8),Identifier of the last rewards/bonus strategy applied to the account.
+74,LAST_CASH_ADV_MIN_PAY_DUE,"NUMBER(19,2)",Minimum payment due attributable to cash advances as of the last statement.
+75,LAST_CASH_APR,"NUMBER(7,3)",APR applied to cash advance balances as of the last statement.
+76,LAST_CASH_END_AMT,"NUMBER(19,2)",Ending cash advance balance as of the last statement.
+77,LAST_CASH_MUF_AMT,"NUMBER(19,2)",Monthly unpaid finance charge on cash advances as of the last statement.
+78,LAST_CASH_MUF_INT_AMT,"NUMBER(19,2)","Interest portion of the monthly unpaid finance charge on cash advances, last statement."
+79,LAST_EXTENDED_DATE,DATE,Date the account's due date/payment plan was last extended.
+80,LAST_FLAP_INT_AMT,"NUMBER(17,2)",Interest amount under the account's last floating/flexible payment (FLAP) plan.
+81,LAST_FLAP_MIN_PAY_DUE_AMT,"NUMBER(19,2)",Minimum payment due under the account's last floating/flexible payment (FLAP) plan.
+82,LAST_GROSS_ADB_CASH_AMT,"NUMBER(19,2)","Average daily balance (gross) attributable to cash advances, last cycle."
+83,LAST_GROSS_ADB_MRCH_AMT,"NUMBER(19,2)","Average daily balance (gross) attributable to merchandise/purchases, last cycle."
+84,LAST_MRCH_1_CYC_UNPAID_AMT,"NUMBER(19,2)","Merchandise balance left unpaid after 1 billing cycle, as of the last statement."
+85,LAST_MRCH_2_CYC_UNPAID_AMT,"NUMBER(19,2)","Merchandise balance left unpaid after 2 billing cycles, as of the last statement."
+86,LAST_MRCH_APR,"NUMBER(7,3)",APR applied to merchandise/purchase balances as of the last statement.
+87,LAST_PRICING_STRATEGY,VARCHAR2(8),Identifier of the last interest-rate/fee pricing strategy applied to the account.
+88,LAST_PYMT_DATE,DATE,Date of the cardholder's most recent payment.
+89,LAST_PYMT_EFFECTIVE_DATE,DATE,Date the most recent payment was posted/became effective on the account.
+90,LAST_STMT_DATE,DATE,Date the account's most recent statement was generated.
+91,LAST_STMT_MRCH_MUF_AMT,"NUMBER(17,2)",Merchandise monthly unpaid finance charge as of the last statement.
+92,LAST_STMT_MRCH_MUF_INTSC_AMT,"NUMBER(17,2)","Merchandise monthly unpaid finance charge, interest sub-component, last statement."
+93,LAST_STMT_MRCH_MUF_INT_AMT,"NUMBER(17,2)","Interest portion of the merchandise monthly unpaid finance charge, last statement."
+94,LAST_STMT_PYMT_AMT,"NUMBER(17,2)",Payment amount reflected on the account's most recent statement.
+95,LATE_CHARGES,"NUMBER(15,2)",Total late-payment fees charged to date on the account.
+96,LATE_CHARGE_ASSESSED,"NUMBER(17,2)",Late fee amount assessed in the most recent billing cycle.
+97,LATE_FEE_HIST_CODE,VARCHAR2(12),Historical code tracking late fee assessment/waiver pattern for the account.
+98,LATE_FEE_ON_CASH_ADVANCE,"NUMBER(19,2)",Late fee amount specifically attributable to cash advance delinquency.
+99,LATE_FEE_TIRD_BAL_AMT,"NUMBER(20,2)","Third-tier late fee amount, based on account balance tier."
+100,LATE_FEE_WAIVER_CHARGE,VARCHAR2(1),Flag indicating whether a late fee was waived for the account.
+101,LOAD_EVENT_SEQ,NUMBER(17),"Sequence number of the data load event that produced this row, for lineage/audit tracking."
+102,MERCHANDISE_AMT,"NUMBER(15,2)",Total merchandise/purchase amount charged to the account.
+103,MERCHANDISE_FINANCE_CHARGES,"NUMBER(15,2)",Finance charges attributable to the merchandise/purchase balance.
+104,MERCHANDISE_PRINCIPAL_AMT,"NUMBER(15,2)",Outstanding principal balance attributable to merchandise/purchases.
+105,MERCHANDISE_QTY,"NUMBER(15,2)",Number of merchandise/purchase transactions on the account.
+106,MIN_FINANCE_CHARGE_GAIN,"NUMBER(15,2)",Minimum finance charge amount applied even when interest calculation would be lower.
+107,MIN_PAY_OVERRIDE_CODE,VARCHAR2(1),"Code indicating the minimum payment was manually overridden, and why."
+108,MIN_PYMT_AMT,"NUMBER(15,2)",Minimum payment amount due for the current statement.
+109,MIN_PYMT_FLAG,VARCHAR2(1),Flag indicating whether only the minimum payment has been made.
+110,MISC_1,VARCHAR2(20),Miscellaneous free-form field reserved for source-system use; no standardized business meaning.
+111,MISC_AMT,"NUMBER(15,2)",Miscellaneous charge or credit amount not covered by other categories.
+112,MTH_CODE,NUMBER(7),Reporting month code in YYYYMM or similar format for this snapshot row.
+113,NBR_DAYS_DELQ_AT_CYC,NUMBER(6),Number of days the account was delinquent as of the last billing cycle close.
+114,NBR_MTHS_DUE,NUMBER(6),Number of billing cycles for which the account currently has an amount past due.
+115,NBR_OF_HIGH_DUE_EVER,NUMBER(21),Highest number of cycles past due the account has ever reached.
+116,NBR_OF_MTHS_LAST_EXTENDED,NUMBER(21),Number of months since the account's payment terms were last extended.
+117,NBR_PYMTS_LAST_BILLING_CYCLE,"NUMBER(15,2)",Number of payments received during the last billing cycle.
+118,NBR_TIMES_EXTENDED,NUMBER(6),Total number of times the account's payment terms have been extended.
+119,NET_OF_GROSS_SALES,"NUMBER(15,2)",Gross sales amount net of returns and adjustments.
+120,NET_SALES,"NUMBER(15,2)",Net purchase amount charged to the account after returns/credits.
+121,OPEN_TO_BUY_AMT,"NUMBER(20,2)",Remaining available credit on the account (credit limit minus current balance/holds).
+122,OVERLIMIT_CHARGE_AMT,"NUMBER(15,2)",Fee charged for exceeding the account's credit limit.
+123,OVERLIMIT_FEE_WAIVER,VARCHAR2(1),Flag indicating whether an over-limit fee was waived.
+124,PAID_IN_FULL_CNT,NUMBER(6),Count of billing cycles in which the account balance was paid in full.
+125,PAST_DUE_1_AMT,"NUMBER(15,2)",Amount past due in the 1st aging bucket (most recent delinquency tier).
+126,PAST_DUE_2_AMOUNT,"NUMBER(20,2)",Amount past due in the 2nd aging bucket.
+127,PAST_DUE_3_AMOUNT,"NUMBER(20,2)",Amount past due in the 3rd aging bucket.
+128,PAST_DUE_4_AMOUNT,"NUMBER(20,2)",Amount past due in the 4th aging bucket.
+129,PAST_DUE_5PLUS_AMOUNT,"NUMBER(20,2)",Amount past due in the 5th-or-later (most severe) aging bucket.
+130,PAYMENT_HIST_1_12_MTHS,VARCHAR2(12),"12-month payment history profile string, one position per month (e.g. on-time/late codes)."
+131,PERMANENT_COLLECTOR_CODE,VARCHAR2(20),Identifier of the collector permanently assigned to work this account.
+132,PFST_ATTRITION_SCORE,NUMBER(3),Predictive score estimating the account's likelihood of attrition (closure/inactivity).
+133,PFST_ATTR_RSN1_CD,NUMBER(5),Primary reason code explaining the attrition score.
+134,PFST_ATTR_RSN2_CD,NUMBER(5),Second reason code explaining the attrition score.
+135,PFST_ATTR_RSN3_CD,NUMBER(5),Third reason code explaining the attrition score.
+136,PFST_CREDIT_RISK_REASON_1,NUMBER(5),Primary reason code explaining the predictive credit risk score.
+137,PFST_CREDIT_RISK_REASON_2,NUMBER(5),Second reason code explaining the predictive credit risk score.
+138,PFST_CREDIT_RISK_REASON_3,NUMBER(5),Third reason code explaining the predictive credit risk score.
+139,PFST_CREDIT_SCORE,NUMBER(3),Predictive/forecast credit risk score modeled for the account.
+140,PFST_PROFIT_PREDICTION,"NUMBER(19,2)",Model-predicted profit contribution of the account over a forward-looking horizon.
+141,PFST_REVENUE_PREDICTION,"NUMBER(19,2)",Model-predicted revenue contribution of the account over a forward-looking horizon.
+142,PFST_REVN_RSN1_CD,NUMBER(5),Primary reason code explaining the revenue prediction.
+143,PFST_REVN_RSN2_CD,NUMBER(5),Second reason code explaining the revenue prediction.
+144,PFST_REVN_RSN3_CD,NUMBER(5),Third reason code explaining the revenue prediction.
+145,PFST_SCORE_LAST_DATE,DATE,Date the predictive/forecast scores were last calculated for this account.
+146,PREV_BALANCE,"NUMBER(15,2)",Account balance as of the previous billing cycle.
+147,PREV_CREDIT_LINE_AMT,NUMBER(16),Credit limit in effect prior to the most recent change.
+148,PREV_EXTENDED_DATE,DATE,Date of the account's previous (not most recent) payment-terms extension.
+149,PREV_REAGE_DATE,DATE,Date of the account's previous re-age event (delinquency status reset).
+150,PREV_STMT_DATE,DATE,Date of the previous billing statement.
+151,PRFT_SCR1_CD,VARCHAR2(3),First profitability score/segment code assigned to the account.
+152,PRFT_SCR2_CD,VARCHAR2(3),Second profitability score/segment code assigned to the account.
+153,PRFT_SCR3_CD,VARCHAR2(3),Third profitability score/segment code assigned to the account.
+154,PRFT_SCR4_CD,VARCHAR2(3),Fourth profitability score/segment code assigned to the account.
+155,PRIN,VARCHAR2(20),Outstanding principal balance on the account.
+156,PRIOR_REAGE_DATE,DATE,Date of the earliest recorded re-age event for the account.
+157,PROMO_BALANCE_AMT,"NUMBER(15,2)",Balance currently subject to a promotional interest rate or deferred-interest offer.
+158,PROMO_FC_AMT,"NUMBER(15,2)",Finance charges attributable to the promotional balance.
+159,PROMO_SALES,VARCHAR2(50),Purchase amount(s) made under a promotional financing offer.
+160,PRTC_BLNC_CD,VARCHAR2(1),Code indicating whether the balance is protected/subject to special handling (e.g. hardship program).
+161,PYMT_AMT,"NUMBER(15,2)",Payment amount posted to the account.
+162,PYMT_DUE_DATE,DATE,Date the next payment is due.
+163,QTY_PROMO_RETURNS,NUMBER(21),Number of returned items originally purchased under a promotional offer.
+164,QTY_PROMO_SALES,NUMBER(21),Number of purchases made under a promotional financing offer.
+165,REBATES_PAID_AMT,"NUMBER(15,2)",Total cash-back/rebate amount paid out to the cardholder.
+166,RECOVERY_IND,VARCHAR2(1),Flag indicating the account is in post-charge-off recovery status.
+167,RELATIONSHIP_IND,VARCHAR2(1),Flag indicating whether the cardholder has other product relationships with the issuer.
+168,RETURN_AMT,"NUMBER(15,2)",Total dollar amount of returned purchases credited to the account.
+169,RETURN_CHECK_CNT_2YR,NUMBER(6),Count of returned (NSF/bounced) payments over the trailing 2 years.
+170,RETURN_CHECK_CNT_LAST_MTH,NUMBER(6),Count of returned (NSF/bounced) payments in the last month.
+171,RETURN_CHECK_CNT_PY,NUMBER(6),Count of returned (NSF/bounced) payments in the prior year.
+172,RETURN_CHECK_CNT_TOTAL,NUMBER(6),Total count of returned (NSF/bounced) payments over the life of the account.
+173,RETURN_CHECK_CNT_YTD,NUMBER(6),Count of returned (NSF/bounced) payments year-to-date.
+174,RETURN_QTY,"NUMBER(15,2)",Number of returned-purchase transactions on the account.
+175,RISK_PREDICTOR_SCORE_ID,NUMBER(5),Identifier of the risk predictor score/model version used for the account.
+176,ROLL_FC_AMT,"NUMBER(15,2)",Finance charge amount rolled forward from a prior billing cycle.
+177,SALE_AMT,"NUMBER(15,2)",Dollar amount of an individual sale/purchase transaction.
+178,SALE_ITEM_FEE_AMT,"NUMBER(15,2)",Per-item fee charged on a sale transaction.
+179,SALE_QTY,"NUMBER(15,2)",Number of items in a sale/purchase transaction.
+180,SECURITIZATION_CODE,VARCHAR2(20),Code indicating whether/how the account's receivable is included in a securitization pool.
+181,SECURITIZATION_PORTFOLIO_NBR,"NUMBER(9,2)",Identifier of the securitization portfolio the account's receivable is assigned to.
+182,SELL_TO_LIMIT_AMT,"NUMBER(19,2)",Maximum balance limit under which the receivable can be sold/securitized.
+183,SPECIAL_ACTIVE_ACCOUNT_IND,VARCHAR2(1),"Flag marking the account for special handling while active (e.g. VIP, litigation hold)."
+184,SPECIAL_CONDITION_5,VARCHAR2(1),"Special-condition flag #5; source-system-defined, no single standardized meaning."
+185,STMT_BALANCE_AMT,"NUMBER(15,2)",Balance shown on the account's most recent statement.
+186,STMT_LIFE_INSURANCE_PREM,"NUMBER(15,2)",Life insurance premium charged on the most recent statement.
+187,SYS,VARCHAR2(20),Code identifying the source system that originated/services this account record.
+188,TEMPORARY_COLLECTOR_CODE,NUMBER(4),Identifier of a collector temporarily assigned to work this account.
+189,TOTAL_FEES_AMT,"NUMBER(15,2)",Sum of all fee amounts charged to the account to date.
+190,TOTAL_PAST_DUE_AMT,"NUMBER(15,2)",Total amount currently past due across all aging buckets.
+191,TOTAL_PRINCIPAL_AMT,"NUMBER(15,2)","Total outstanding principal balance on the account, across all balance types."
+192,TOTAL_YTD_FEE_AM,"NUMBER(20,2)",Total fees charged to the account year-to-date.
+193,TOTAL_YTD_INTR_AM,"NUMBER(20,2)",Total interest charged to the account year-to-date.
+194,UNPAID_FINANCE_CHARGES,"NUMBER(15,2)",Finance charges that have accrued but not yet been paid.
+195,UNPAID_INSURANCE_CHARGES_AMT,"NUMBER(15,2)",Insurance premium charges that have accrued but not yet been paid.
+196,UNPAID_INTEREST_SERVICE_CHARGE,"NUMBER(15,2)",Interest/service charges that have accrued but not yet been paid.
+197,UNPAID_LATE_CHARGE_AMT,"NUMBER(15,2)",Late fee charges that have accrued but not yet been paid.
+198,UNPAID_MISC_CHARGES_AMT,"NUMBER(15,2)",Miscellaneous charges that have accrued but not yet been paid.
+199,UPC_1,VARCHAR2(20),Universal product code or identifier associated with a purchase; source-system field.
+200,WORKOUT_REAGE_DATE,DATE,Date the account was re-aged as part of a hardship/workout program.
+201,WRITEOFF_AMT,"NUMBER(15,2)",Amount charged off as uncollectible.
+202,WRITEOFF_DATE,DATE,Date the account balance was charged off as uncollectible.
+203,YTD_ANNL_CHRG_AMT,"NUMBER(20,2)","Annual fee charged to the account, year-to-date."
+204,YTD_CASH_ADV_INTR_CHRG_AMT,"NUMBER(20,2)","Interest charged on cash advances, year-to-date."
+205,YTD_CASH_ADV_ITEM_CHRG_AMT,"NUMBER(20,2)","Per-item cash advance fees charged, year-to-date."
+206,YTD_CRDT_LIFE_FEES_AMT,"NUMBER(20,2)","Credit life insurance fees charged, year-to-date."
+207,YTD_CRDT_LIFE_INTR_AMT,"NUMBER(20,2)","Interest charged on credit life insurance premiums, year-to-date."
+208,YTD_CSTM_FEES_CHRG_AMT,"NUMBER(20,2)","Custom/miscellaneous fees charged, year-to-date."
+209,YTD_CSTM_INTR_CHRG_AMT,"NUMBER(20,2)","Custom/miscellaneous interest charged, year-to-date."
+210,YTD_DCLN_AUTH_CHRG_AMT,"NUMBER(20,2)","Fees associated with declined authorization attempts, year-to-date."
+211,YTD_LATE_CHRG_AMT,"NUMBER(20,2)","Late fees charged, year-to-date."
+212,YTD_MIN_FIN_CHRG_AMT,"NUMBER(20,2)","Minimum finance charges applied, year-to-date."
+213,YTD_MISC_FEES_AMT,"NUMBER(20,2)","Miscellaneous fees charged, year-to-date."
+214,YTD_MISC_INTR_AMT,"NUMBER(20,2)","Miscellaneous interest charged, year-to-date."
+215,YTD_MMB_FEES_AMT,"NUMBER(20,2)","Membership/add-on product fees charged, year-to-date."
+216,YTD_MMB_INTR_AMT,"NUMBER(20,2)","Interest charged on membership/add-on product balances, year-to-date."
+217,YTD_MRCH_INTR_CHRG_AMT,"NUMBER(20,2)","Interest charged on merchandise/purchase balances, year-to-date."
+218,YTD_MRCH_ITEM_CHRG_AMT,"NUMBER(20,2)","Per-item merchandise fees charged, year-to-date."
+219,YTD_NSF_CHRG_AMT,"NUMBER(20,2)","Non-sufficient-funds (returned payment) fees charged, year-to-date."
+220,YTD_OIF_CHRG_AMT,"NUMBER(20,2)","Over-limit/insufficient-funds related fees charged, year-to-date."
+221,YTD_OVRL_CHRG_AMT,"NUMBER(20,2)","Over-limit fees charged, year-to-date."
+222,YTD_STMT_CHRG_AMT,"NUMBER(20,2)","Statement-related fees (e.g. paper statement fee) charged, year-to-date."

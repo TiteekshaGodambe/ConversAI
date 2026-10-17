@@ -1,0 +1,229 @@
+# Physical columns of the two tables, with the data dictionary's description (used by engine/definitions.py
+# to tell the model what a proposed definition may use). Only GOVERNED columns (the ones the semantic layer
+# already reads, plus targets.yaml exports.extra_columns) may appear in a proposed definition.
+columns:
+  account:
+    ACCOUNT_GROUP_ID: { type: "VARCHAR", description: "Identifier for the group/portfolio this account belongs to." }
+    ACCOUNT_KEY: { type: "BIGINT", description: "Unique surrogate key identifying the credit card account. Primary join key for this table." }
+    AGENT: { type: "VARCHAR", description: "Code or name of the servicing/collections agent associated with the account." }
+    APPLICATION_KEY: { type: "BIGINT", description: "Surrogate key linking the account back to its original credit application." }
+    BANKRUPTCY_CODE: { type: "VARCHAR", description: "Single-character code indicating bankruptcy status of the account (e.g. filed, discharged, none)." }
+    BANKRUPTCY_FILING_DATE: { type: "DATE", description: "Date the cardholder's bankruptcy was filed, if applicable." }
+    BILLING_CYCLE_DAY: { type: "DECIMAL(21,0)", description: "Day of the month on which the account's billing cycle closes." }
+    BONUS_POINTS_IND: { type: "VARCHAR", description: "Flag indicating whether the account participates in a bonus/rewards points program." }
+    CLIENT_ID: { type: "VARCHAR", description: "Business identifier of the client/customer who owns the account." }
+    CLIENT_KEY: { type: "BIGINT", description: "Surrogate key identifying the client/customer record, for joining to a customer/client dimension table." }
+    CREDIT_BUREAU_FLAG: { type: "VARCHAR", description: "Flag indicating whether this account is reported to the credit bureau." }
+    CREDIT_BUREAU_MONITOR_CODE: { type: "VARCHAR", description: "Code indicating the account's credit bureau monitoring status." }
+    CURRENT_ACCOUNT_NBR: { type: "VARCHAR", description: "Current (possibly reissued) account number for the card." }
+    EBILL_IND: { type: "VARCHAR", description: "Flag indicating whether the cardholder is enrolled in electronic billing (paperless statements)." }
+    EXTERNAL_STATUS: { type: "VARCHAR", description: "Account status code as reported externally (e.g. to the credit bureau)." }
+    EXTERNAL_STATUS_REASON_CODE: { type: "VARCHAR", description: "Reason code explaining the externally reported account status." }
+    FDR_RECORD_FORMAT: { type: "BIGINT", description: "Record format/version code from the source processing system (FDR)." }
+    FINANCIAL_ACTIVE_STATUS: { type: "VARCHAR", description: "Code indicating whether the account is financially active (has a balance/activity) or dormant." }
+    INTERNAL_STATUS: { type: "VARCHAR", description: "Internal account status code used by the servicing system (distinct from EXTERNAL_STATUS)." }
+    PERMANENT_COLLECTOR_CODE: { type: "VARCHAR", description: "Identifier of the collector permanently assigned to work this account." }
+    RECOVERY_IND: { type: "VARCHAR", description: "Flag indicating the account is in post-charge-off recovery status." }
+    RELATIONSHIP_IND: { type: "VARCHAR", description: "Flag indicating whether the cardholder has other product relationships with the issuer." }
+    SECURITIZATION_CODE: { type: "VARCHAR", description: "Code indicating whether/how the account's receivable is included in a securitization pool." }
+    SECURITIZATION_PORTFOLIO_NBR: { type: "DECIMAL(9,2)", description: "Identifier of the securitization portfolio the account's receivable is assigned to." }
+    SPECIAL_ACTIVE_ACCOUNT_IND: { type: "VARCHAR", description: "Flag marking the account for special handling while active (e.g. VIP, litigation hold)." }
+    SYS: { type: "VARCHAR", description: "Code identifying the source system that originated/services this account record." }
+    WRITEOFF_DATE: { type: "DATE", description: "Date the account balance was charged off as uncollectible." }
+  account_cycle:
+    ACCOUNT_HISTORY_KEY: { type: "BIGINT", description: "Surrogate key for a historical snapshot row of this account." }
+    ACCOUNT_KEY: { type: "BIGINT", description: "Unique surrogate key identifying the credit card account. Primary join key for this table." }
+    AMT_TOTAL_AUTH: { type: "DECIMAL(15,2)", description: "Total dollar amount of transactions authorized on the account." }
+    AVOID_FINANCE_CHARGES_AMT: { type: "DECIMAL(20,2)", description: "Amount the cardholder would need to pay to avoid finance charges this cycle." }
+    BANKRUPTCY_SCORE: { type: "BIGINT", description: "Bureau-derived score estimating bankruptcy risk for the account." }
+    BANKRUPTCY_SCORE_DATE: { type: "DATE", description: "Date the bankruptcy score was calculated." }
+    BANKRUPTCY_SCORE_REASON_1: { type: "VARCHAR", description: "Primary reason code explaining the bankruptcy score." }
+    BANKRUPTCY_SCORE_REASON_2: { type: "VARCHAR", description: "Second reason code explaining the bankruptcy score." }
+    BANKRUPTCY_SCORE_REASON_3: { type: "VARCHAR", description: "Third reason code explaining the bankruptcy score." }
+    BEHAVIOR_SCORE: { type: "BIGINT", description: "Internal score predicting account behavior (e.g. delinquency risk) based on payment/usage history." }
+    BEHAVIOR_SCORE_CARD_ID: { type: "VARCHAR", description: "Identifier of the scorecard model version used to compute the behavior score." }
+    BEHAVIOR_SCORE_DATE: { type: "DATE", description: "Date the behavior score was calculated." }
+    BEHAVIOR_SCORE_REASON_CODE_1: { type: "VARCHAR", description: "Primary reason code explaining the behavior score." }
+    BEHAVIOR_SCORE_REASON_CODE_2: { type: "VARCHAR", description: "Second reason code explaining the behavior score." }
+    BEHAVIOR_SCORE_REASON_CODE_3: { type: "VARCHAR", description: "Third reason code explaining the behavior score." }
+    BEHAVIOR_SCORE_REASON_CODE_4: { type: "VARCHAR", description: "Fourth reason code explaining the behavior score." }
+    BHS_DELQ_ID: { type: "VARCHAR", description: "Billing/history-system delinquency bucket identifier for the account." }
+    BILLING_CYCLE_DATE: { type: "DATE", description: "Date of the account's current billing cycle close." }
+    BILLING_CYCLE_KEY: { type: "BIGINT", description: "Surrogate key identifying the specific billing cycle record." }
+    BILLING_YEAR_MTH: { type: "BIGINT", description: "Billing period expressed as YYYYMM." }
+    BILL_CASH_INTEREST_AMT: { type: "DECIMAL(15,2)", description: "Interest charged on cash advances, included in this cycle's bill." }
+    BILL_MERCHANDISE_INTEREST_AMT: { type: "DECIMAL(15,2)", description: "Interest charged on merchandise/purchase balances, included in this cycle's bill." }
+    BONUS_POINTS_AMT: { type: "DECIMAL(15,2)", description: "Rewards/bonus points balance accrued on the account." }
+    BUREAU_SCORE: { type: "BIGINT", description: "External credit bureau score (e.g. FICO-style) for the account holder." }
+    BUREAU_SCORE_DATE: { type: "DATE", description: "Date the bureau score was pulled/calculated." }
+    BUREAU_SCORE_REASON_CODE_1: { type: "VARCHAR", description: "Primary bureau-supplied reason code for the credit score." }
+    BUREAU_SCORE_REASON_CODE_2: { type: "VARCHAR", description: "Second bureau-supplied reason code for the credit score." }
+    BUREAU_SCORE_REASON_CODE_3: { type: "VARCHAR", description: "Third bureau-supplied reason code for the credit score." }
+    BUREAU_SCORE_REASON_CODE_4: { type: "VARCHAR", description: "Fourth bureau-supplied reason code for the credit score." }
+    BUREAU_SCORE_REASON_CODE_5: { type: "VARCHAR", description: "Fifth bureau-supplied reason code for the credit score." }
+    CASH_ADV_AMT: { type: "DECIMAL(15,2)", description: "Total dollar amount of cash advances taken on the account." }
+    CASH_ADV_CREDIT_LINE: { type: "BIGINT", description: "Portion of the credit limit available for cash advances." }
+    CASH_ADV_FEES: { type: "DECIMAL(15,2)", description: "Fees charged for cash advance transactions." }
+    CASH_ADV_PRINCIPAL_AMT: { type: "DECIMAL(15,2)", description: "Outstanding principal balance attributable to cash advances." }
+    CASH_ADV_QTY: { type: "BIGINT", description: "Number of cash advance transactions on the account." }
+    CDCI_LOAD_DATE: { type: "DATE", description: "Date this record was loaded into the data warehouse/CDCI feed." }
+    CRDT_BUREAU_SPCL_CMNT_CODE: { type: "VARCHAR", description: "Credit bureau special-comment code (consumer statement/dispute flag) reported for the account." }
+    CREDIT_LIFE_CHARGE_AMT: { type: "DECIMAL(15,2)", description: "Charge amount for optional credit life insurance on the account." }
+    CREDIT_LIMIT_AMT: { type: "BIGINT", description: "Approved total credit limit for the account, in USD." }
+    CREDIT_LIMIT_CHANGE_TYPE: { type: "VARCHAR", description: "Code describing the type of the most recent credit limit change (e.g. increase, decrease, manual review)." }
+    CURRENT_DUE_FLAG: { type: "VARCHAR", description: "Flag indicating whether the account currently has an amount due." }
+    CURRENT_RECENCY_NBR: { type: "BIGINT", description: "Number of cycles since the account's most recent activity/payment." }
+    CURR_MNTH_BALANCE_AMT: { type: "DECIMAL(19,4)", description: "Current month's outstanding account balance, in USD." }
+    CYCLE_BALANCE_QTY: { type: "BIGINT", description: "Count of billing cycles that have carried a balance." }
+    DELQ_DATE: { type: "DATE", description: "Date the account first became delinquent in its current delinquency episode." }
+    DEP_STRATEGY_ID: { type: "VARCHAR", description: "Identifier of the deposit/collections strategy applied to the account." }
+    DUE_36_PROFILE: { type: "VARCHAR", description: "36-month history profile string of amounts/status due, one position per period." }
+    FINANCE_CHARGES_PAID: { type: "DECIMAL(15,2)", description: "Total finance charges paid by the cardholder to date." }
+    FINANCE_CHARGE_AMT_BILLED_TOT: { type: "DECIMAL(15,2)", description: "Total finance charges billed on the account." }
+    FINANCE_CHARGE_AMT_ON_CASH_ADV: { type: "DECIMAL(15,2)", description: "Finance charges billed specifically on cash advance balances." }
+    FINANCE_CHARGE_RATE: { type: "BIGINT", description: "Interest rate (APR) applied to compute finance charges on the account." }
+    GRACE_DAY_ID: { type: "VARCHAR", description: "Identifier for the grace period rule (number of interest-free days) applied to the account." }
+    GROSS_SALES: { type: "DECIMAL(15,2)", description: "Total gross purchase amount charged to the account before returns/adjustments." }
+    INSTALLMENT_PYMT_DUE: { type: "DECIMAL(15,2)", description: "Amount due this cycle under an installment/deferred payment plan." }
+    LAST_BONUS_STRATEGY: { type: "VARCHAR", description: "Identifier of the last rewards/bonus strategy applied to the account." }
+    LAST_CASH_ADV_MIN_PAY_DUE: { type: "DECIMAL(19,2)", description: "Minimum payment due attributable to cash advances as of the last statement." }
+    LAST_CASH_APR: { type: "DECIMAL(7,3)", description: "APR applied to cash advance balances as of the last statement." }
+    LAST_CASH_END_AMT: { type: "DECIMAL(19,2)", description: "Ending cash advance balance as of the last statement." }
+    LAST_CASH_MUF_AMT: { type: "DECIMAL(19,2)", description: "Monthly unpaid finance charge on cash advances as of the last statement." }
+    LAST_CASH_MUF_INT_AMT: { type: "DECIMAL(19,2)", description: "Interest portion of the monthly unpaid finance charge on cash advances, last statement." }
+    LAST_EXTENDED_DATE: { type: "DATE", description: "Date the account's due date/payment plan was last extended." }
+    LAST_FLAP_INT_AMT: { type: "DECIMAL(17,2)", description: "Interest amount under the account's last floating/flexible payment (FLAP) plan." }
+    LAST_FLAP_MIN_PAY_DUE_AMT: { type: "DECIMAL(19,2)", description: "Minimum payment due under the account's last floating/flexible payment (FLAP) plan." }
+    LAST_GROSS_ADB_CASH_AMT: { type: "DECIMAL(19,2)", description: "Average daily balance (gross) attributable to cash advances, last cycle." }
+    LAST_GROSS_ADB_MRCH_AMT: { type: "DECIMAL(19,2)", description: "Average daily balance (gross) attributable to merchandise/purchases, last cycle." }
+    LAST_MRCH_1_CYC_UNPAID_AMT: { type: "DECIMAL(19,2)", description: "Merchandise balance left unpaid after 1 billing cycle, as of the last statement." }
+    LAST_MRCH_2_CYC_UNPAID_AMT: { type: "DECIMAL(19,2)", description: "Merchandise balance left unpaid after 2 billing cycles, as of the last statement." }
+    LAST_MRCH_APR: { type: "DECIMAL(7,3)", description: "APR applied to merchandise/purchase balances as of the last statement." }
+    LAST_PRICING_STRATEGY: { type: "VARCHAR", description: "Identifier of the last interest-rate/fee pricing strategy applied to the account." }
+    LAST_PYMT_DATE: { type: "DATE", description: "Date of the cardholder's most recent payment." }
+    LAST_PYMT_EFFECTIVE_DATE: { type: "DATE", description: "Date the most recent payment was posted/became effective on the account." }
+    LAST_STMT_DATE: { type: "DATE", description: "Date the account's most recent statement was generated." }
+    LAST_STMT_MRCH_MUF_AMT: { type: "DECIMAL(17,2)", description: "Merchandise monthly unpaid finance charge as of the last statement." }
+    LAST_STMT_MRCH_MUF_INTSC_AMT: { type: "DECIMAL(17,2)", description: "Merchandise monthly unpaid finance charge, interest sub-component, last statement." }
+    LAST_STMT_MRCH_MUF_INT_AMT: { type: "DECIMAL(17,2)", description: "Interest portion of the merchandise monthly unpaid finance charge, last statement." }
+    LAST_STMT_PYMT_AMT: { type: "DECIMAL(17,2)", description: "Payment amount reflected on the account's most recent statement." }
+    LATE_CHARGES: { type: "DECIMAL(15,2)", description: "Total late-payment fees charged to date on the account." }
+    LATE_CHARGE_ASSESSED: { type: "DECIMAL(17,2)", description: "Late fee amount assessed in the most recent billing cycle." }
+    LATE_FEE_HIST_CODE: { type: "VARCHAR", description: "Historical code tracking late fee assessment/waiver pattern for the account." }
+    LATE_FEE_ON_CASH_ADVANCE: { type: "DECIMAL(19,2)", description: "Late fee amount specifically attributable to cash advance delinquency." }
+    LATE_FEE_TIRD_BAL_AMT: { type: "DECIMAL(20,2)", description: "Third-tier late fee amount, based on account balance tier." }
+    LATE_FEE_WAIVER_CHARGE: { type: "VARCHAR", description: "Flag indicating whether a late fee was waived for the account." }
+    LOAD_EVENT_SEQ: { type: "BIGINT", description: "Sequence number of the data load event that produced this row, for lineage/audit tracking." }
+    MERCHANDISE_AMT: { type: "DECIMAL(15,2)", description: "Total merchandise/purchase amount charged to the account." }
+    MERCHANDISE_FINANCE_CHARGES: { type: "DECIMAL(15,2)", description: "Finance charges attributable to the merchandise/purchase balance." }
+    MERCHANDISE_PRINCIPAL_AMT: { type: "DECIMAL(15,2)", description: "Outstanding principal balance attributable to merchandise/purchases." }
+    MERCHANDISE_QTY: { type: "DECIMAL(15,2)", description: "Number of merchandise/purchase transactions on the account." }
+    MIN_FINANCE_CHARGE_GAIN: { type: "DECIMAL(15,2)", description: "Minimum finance charge amount applied even when interest calculation would be lower." }
+    MIN_PAY_OVERRIDE_CODE: { type: "VARCHAR", description: "Code indicating the minimum payment was manually overridden, and why." }
+    MIN_PYMT_AMT: { type: "DECIMAL(15,2)", description: "Minimum payment amount due for the current statement." }
+    MIN_PYMT_FLAG: { type: "VARCHAR", description: "Flag indicating whether only the minimum payment has been made." }
+    MISC_1: { type: "VARCHAR", description: "Miscellaneous free-form field reserved for source-system use; no standardized business meaning." }
+    MISC_AMT: { type: "DECIMAL(15,2)", description: "Miscellaneous charge or credit amount not covered by other categories." }
+    MTH_CODE: { type: "BIGINT", description: "Reporting month code in YYYYMM or similar format for this snapshot row." }
+    NBR_DAYS_DELQ_AT_CYC: { type: "BIGINT", description: "Number of days the account was delinquent as of the last billing cycle close." }
+    NBR_MTHS_DUE: { type: "BIGINT", description: "Number of billing cycles for which the account currently has an amount past due." }
+    NBR_OF_HIGH_DUE_EVER: { type: "DECIMAL(21,0)", description: "Highest number of cycles past due the account has ever reached." }
+    NBR_OF_MTHS_LAST_EXTENDED: { type: "DECIMAL(21,0)", description: "Number of months since the account's payment terms were last extended." }
+    NBR_PYMTS_LAST_BILLING_CYCLE: { type: "DECIMAL(15,2)", description: "Number of payments received during the last billing cycle." }
+    NBR_TIMES_EXTENDED: { type: "BIGINT", description: "Total number of times the account's payment terms have been extended." }
+    NET_OF_GROSS_SALES: { type: "DECIMAL(15,2)", description: "Gross sales amount net of returns and adjustments." }
+    NET_SALES: { type: "DECIMAL(15,2)", description: "Net purchase amount charged to the account after returns/credits." }
+    OPEN_TO_BUY_AMT: { type: "DECIMAL(20,2)", description: "Remaining available credit on the account (credit limit minus current balance/holds)." }
+    OVERLIMIT_CHARGE_AMT: { type: "DECIMAL(15,2)", description: "Fee charged for exceeding the account's credit limit." }
+    OVERLIMIT_FEE_WAIVER: { type: "VARCHAR", description: "Flag indicating whether an over-limit fee was waived." }
+    PAID_IN_FULL_CNT: { type: "BIGINT", description: "Count of billing cycles in which the account balance was paid in full." }
+    PAST_DUE_1_AMT: { type: "DECIMAL(15,2)", description: "Amount past due in the 1st aging bucket (most recent delinquency tier)." }
+    PAST_DUE_2_AMOUNT: { type: "DECIMAL(20,2)", description: "Amount past due in the 2nd aging bucket." }
+    PAST_DUE_3_AMOUNT: { type: "DECIMAL(20,2)", description: "Amount past due in the 3rd aging bucket." }
+    PAST_DUE_4_AMOUNT: { type: "DECIMAL(20,2)", description: "Amount past due in the 4th aging bucket." }
+    PAST_DUE_5PLUS_AMOUNT: { type: "DECIMAL(20,2)", description: "Amount past due in the 5th-or-later (most severe) aging bucket." }
+    PAYMENT_HIST_1_12_MTHS: { type: "VARCHAR", description: "12-month payment history profile string, one position per month (e.g. on-time/late codes)." }
+    PFST_ATTRITION_SCORE: { type: "BIGINT", description: "Predictive score estimating the account's likelihood of attrition (closure/inactivity)." }
+    PFST_ATTR_RSN1_CD: { type: "BIGINT", description: "Primary reason code explaining the attrition score." }
+    PFST_ATTR_RSN2_CD: { type: "BIGINT", description: "Second reason code explaining the attrition score." }
+    PFST_ATTR_RSN3_CD: { type: "BIGINT", description: "Third reason code explaining the attrition score." }
+    PFST_CREDIT_RISK_REASON_1: { type: "BIGINT", description: "Primary reason code explaining the predictive credit risk score." }
+    PFST_CREDIT_RISK_REASON_2: { type: "BIGINT", description: "Second reason code explaining the predictive credit risk score." }
+    PFST_CREDIT_RISK_REASON_3: { type: "BIGINT", description: "Third reason code explaining the predictive credit risk score." }
+    PFST_CREDIT_SCORE: { type: "BIGINT", description: "Predictive/forecast credit risk score modeled for the account." }
+    PFST_PROFIT_PREDICTION: { type: "DECIMAL(19,2)", description: "Model-predicted profit contribution of the account over a forward-looking horizon." }
+    PFST_REVENUE_PREDICTION: { type: "DECIMAL(19,2)", description: "Model-predicted revenue contribution of the account over a forward-looking horizon." }
+    PFST_REVN_RSN1_CD: { type: "BIGINT", description: "Primary reason code explaining the revenue prediction." }
+    PFST_REVN_RSN2_CD: { type: "BIGINT", description: "Second reason code explaining the revenue prediction." }
+    PFST_REVN_RSN3_CD: { type: "BIGINT", description: "Third reason code explaining the revenue prediction." }
+    PFST_SCORE_LAST_DATE: { type: "DATE", description: "Date the predictive/forecast scores were last calculated for this account." }
+    PREV_BALANCE: { type: "DECIMAL(15,2)", description: "Account balance as of the previous billing cycle." }
+    PREV_CREDIT_LINE_AMT: { type: "BIGINT", description: "Credit limit in effect prior to the most recent change." }
+    PREV_EXTENDED_DATE: { type: "DATE", description: "Date of the account's previous (not most recent) payment-terms extension." }
+    PREV_REAGE_DATE: { type: "DATE", description: "Date of the account's previous re-age event (delinquency status reset)." }
+    PREV_STMT_DATE: { type: "DATE", description: "Date of the previous billing statement." }
+    PRFT_SCR1_CD: { type: "VARCHAR", description: "First profitability score/segment code assigned to the account." }
+    PRFT_SCR2_CD: { type: "VARCHAR", description: "Second profitability score/segment code assigned to the account." }
+    PRFT_SCR3_CD: { type: "VARCHAR", description: "Third profitability score/segment code assigned to the account." }
+    PRFT_SCR4_CD: { type: "VARCHAR", description: "Fourth profitability score/segment code assigned to the account." }
+    PRIN: { type: "VARCHAR", description: "Outstanding principal balance on the account." }
+    PRIOR_REAGE_DATE: { type: "DATE", description: "Date of the earliest recorded re-age event for the account." }
+    PROMO_BALANCE_AMT: { type: "DECIMAL(15,2)", description: "Balance currently subject to a promotional interest rate or deferred-interest offer." }
+    PROMO_FC_AMT: { type: "DECIMAL(15,2)", description: "Finance charges attributable to the promotional balance." }
+    PROMO_SALES: { type: "VARCHAR", description: "Purchase amount(s) made under a promotional financing offer." }
+    PRTC_BLNC_CD: { type: "VARCHAR", description: "Code indicating whether the balance is protected/subject to special handling (e.g. hardship program)." }
+    PYMT_AMT: { type: "DECIMAL(15,2)", description: "Payment amount posted to the account." }
+    PYMT_DUE_DATE: { type: "DATE", description: "Date the next payment is due." }
+    QTY_PROMO_RETURNS: { type: "DECIMAL(21,0)", description: "Number of returned items originally purchased under a promotional offer." }
+    QTY_PROMO_SALES: { type: "DECIMAL(21,0)", description: "Number of purchases made under a promotional financing offer." }
+    REBATES_PAID_AMT: { type: "DECIMAL(15,2)", description: "Total cash-back/rebate amount paid out to the cardholder." }
+    RETURN_AMT: { type: "DECIMAL(15,2)", description: "Total dollar amount of returned purchases credited to the account." }
+    RETURN_CHECK_CNT_2YR: { type: "BIGINT", description: "Count of returned (NSF/bounced) payments over the trailing 2 years." }
+    RETURN_CHECK_CNT_LAST_MTH: { type: "BIGINT", description: "Count of returned (NSF/bounced) payments in the last month." }
+    RETURN_CHECK_CNT_PY: { type: "BIGINT", description: "Count of returned (NSF/bounced) payments in the prior year." }
+    RETURN_CHECK_CNT_TOTAL: { type: "BIGINT", description: "Total count of returned (NSF/bounced) payments over the life of the account." }
+    RETURN_CHECK_CNT_YTD: { type: "BIGINT", description: "Count of returned (NSF/bounced) payments year-to-date." }
+    RETURN_QTY: { type: "DECIMAL(15,2)", description: "Number of returned-purchase transactions on the account." }
+    RISK_PREDICTOR_SCORE_ID: { type: "BIGINT", description: "Identifier of the risk predictor score/model version used for the account." }
+    ROLL_FC_AMT: { type: "DECIMAL(15,2)", description: "Finance charge amount rolled forward from a prior billing cycle." }
+    SALE_AMT: { type: "DECIMAL(15,2)", description: "Dollar amount of an individual sale/purchase transaction." }
+    SALE_ITEM_FEE_AMT: { type: "DECIMAL(15,2)", description: "Per-item fee charged on a sale transaction." }
+    SALE_QTY: { type: "DECIMAL(15,2)", description: "Number of items in a sale/purchase transaction." }
+    SELL_TO_LIMIT_AMT: { type: "DECIMAL(19,2)", description: "Maximum balance limit under which the receivable can be sold/securitized." }
+    SPECIAL_CONDITION_5: { type: "VARCHAR", description: "Special-condition flag #5; source-system-defined, no single standardized meaning." }
+    STMT_BALANCE_AMT: { type: "DECIMAL(15,2)", description: "Balance shown on the account's most recent statement." }
+    STMT_LIFE_INSURANCE_PREM: { type: "DECIMAL(15,2)", description: "Life insurance premium charged on the most recent statement." }
+    TEMPORARY_COLLECTOR_CODE: { type: "BIGINT", description: "Identifier of a collector temporarily assigned to work this account." }
+    TOTAL_FEES_AMT: { type: "DECIMAL(15,2)", description: "Sum of all fee amounts charged to the account to date." }
+    TOTAL_PAST_DUE_AMT: { type: "DECIMAL(15,2)", description: "Total amount currently past due across all aging buckets." }
+    TOTAL_PRINCIPAL_AMT: { type: "DECIMAL(15,2)", description: "Total outstanding principal balance on the account, across all balance types." }
+    TOTAL_YTD_FEE_AM: { type: "DECIMAL(20,2)", description: "Total fees charged to the account year-to-date." }
+    TOTAL_YTD_INTR_AM: { type: "DECIMAL(20,2)", description: "Total interest charged to the account year-to-date." }
+    UNPAID_FINANCE_CHARGES: { type: "DECIMAL(15,2)", description: "Finance charges that have accrued but not yet been paid." }
+    UNPAID_INSURANCE_CHARGES_AMT: { type: "DECIMAL(15,2)", description: "Insurance premium charges that have accrued but not yet been paid." }
+    UNPAID_INTEREST_SERVICE_CHARGE: { type: "DECIMAL(15,2)", description: "Interest/service charges that have accrued but not yet been paid." }
+    UNPAID_LATE_CHARGE_AMT: { type: "DECIMAL(15,2)", description: "Late fee charges that have accrued but not yet been paid." }
+    UNPAID_MISC_CHARGES_AMT: { type: "DECIMAL(15,2)", description: "Miscellaneous charges that have accrued but not yet been paid." }
+    UPC_1: { type: "VARCHAR", description: "Universal product code or identifier associated with a purchase; source-system field." }
+    WORKOUT_REAGE_DATE: { type: "DATE", description: "Date the account was re-aged as part of a hardship/workout program." }
+    WRITEOFF_AMT: { type: "DECIMAL(15,2)", description: "Amount charged off as uncollectible." }
+    YTD_ANNL_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Annual fee charged to the account, year-to-date." }
+    YTD_CASH_ADV_INTR_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Interest charged on cash advances, year-to-date." }
+    YTD_CASH_ADV_ITEM_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Per-item cash advance fees charged, year-to-date." }
+    YTD_CRDT_LIFE_FEES_AMT: { type: "DECIMAL(20,2)", description: "Credit life insurance fees charged, year-to-date." }
+    YTD_CRDT_LIFE_INTR_AMT: { type: "DECIMAL(20,2)", description: "Interest charged on credit life insurance premiums, year-to-date." }
+    YTD_CSTM_FEES_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Custom/miscellaneous fees charged, year-to-date." }
+    YTD_CSTM_INTR_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Custom/miscellaneous interest charged, year-to-date." }
+    YTD_DCLN_AUTH_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Fees associated with declined authorization attempts, year-to-date." }
+    YTD_LATE_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Late fees charged, year-to-date." }
+    YTD_MIN_FIN_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Minimum finance charges applied, year-to-date." }
+    YTD_MISC_FEES_AMT: { type: "DECIMAL(20,2)", description: "Miscellaneous fees charged, year-to-date." }
+    YTD_MISC_INTR_AMT: { type: "DECIMAL(20,2)", description: "Miscellaneous interest charged, year-to-date." }
+    YTD_MMB_FEES_AMT: { type: "DECIMAL(20,2)", description: "Membership/add-on product fees charged, year-to-date." }
+    YTD_MMB_INTR_AMT: { type: "DECIMAL(20,2)", description: "Interest charged on membership/add-on product balances, year-to-date." }
+    YTD_MRCH_INTR_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Interest charged on merchandise/purchase balances, year-to-date." }
+    YTD_MRCH_ITEM_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Per-item merchandise fees charged, year-to-date." }
+    YTD_NSF_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Non-sufficient-funds (returned payment) fees charged, year-to-date." }
+    YTD_OIF_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Over-limit/insufficient-funds related fees charged, year-to-date." }
+    YTD_OVRL_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Over-limit fees charged, year-to-date." }
+    YTD_STMT_CHRG_AMT: { type: "DECIMAL(20,2)", description: "Statement-related fees (e.g. paper statement fee) charged, year-to-date." }

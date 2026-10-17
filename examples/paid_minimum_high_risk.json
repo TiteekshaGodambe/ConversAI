@@ -1,0 +1,4 @@
+{"metrics": ["paid_minimum_rate", "accounts"],
+ "where": [{"dimension": "account_cycle__bureau_score", "op": "<", "value": 620},
+           {"dimension": "account_cycle__utilization_band", "op": "=", "value": "3 >80%"},
+           {"dimension": "metric_time__month", "op": "=", "value": "2026-09-01"}]}

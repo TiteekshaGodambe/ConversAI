@@ -1,0 +1,223 @@
+column,table,note
+ACCOUNT_GROUP_ID,account,"Account grouping, fixed for the account"
+ACCOUNT_HISTORY_KEY,cycle,Unique per account-cycle row: primary key of ACCOUNT_CYCLE_FACT
+ACCOUNT_KEY,key,"Join key: in both tables (primary key of ACCOUNT_DIM, foreign key in ACCOUNT_CYCLE_FACT)"
+AGENT,account,Servicing agent assigned to the account
+AMT_TOTAL_AUTH,cycle,Changes every billing cycle
+APPLICATION_KEY,account,The application the account came from
+AVOID_FINANCE_CHARGES_AMT,cycle,Changes every billing cycle
+BANKRUPTCY_CODE,account,Account-level bankruptcy flag/code
+BANKRUPTCY_FILING_DATE,account,Account-level bankruptcy filing date
+BANKRUPTCY_SCORE,cycle,Changes every billing cycle
+BANKRUPTCY_SCORE_DATE,cycle,Changes every billing cycle
+BANKRUPTCY_SCORE_REASON_1,cycle,Changes every billing cycle
+BANKRUPTCY_SCORE_REASON_2,cycle,Changes every billing cycle
+BANKRUPTCY_SCORE_REASON_3,cycle,Changes every billing cycle
+BEHAVIOR_SCORE,cycle,Changes every billing cycle
+BEHAVIOR_SCORE_CARD_ID,cycle,Changes every billing cycle
+BEHAVIOR_SCORE_DATE,cycle,Changes every billing cycle
+BEHAVIOR_SCORE_REASON_CODE_1,cycle,Changes every billing cycle
+BEHAVIOR_SCORE_REASON_CODE_2,cycle,Changes every billing cycle
+BEHAVIOR_SCORE_REASON_CODE_3,cycle,Changes every billing cycle
+BEHAVIOR_SCORE_REASON_CODE_4,cycle,Changes every billing cycle
+BHS_DELQ_ID,cycle,Changes every billing cycle
+BILLING_CYCLE_DATE,cycle,Statement date of the cycle
+BILLING_CYCLE_DAY,account,Day of month the statement cuts; fixed per account
+BILLING_CYCLE_KEY,cycle,Unique per account-cycle row
+BILLING_YEAR_MTH,cycle,Changes every billing cycle
+BILL_CASH_INTEREST_AMT,cycle,Changes every billing cycle
+BILL_MERCHANDISE_INTEREST_AMT,cycle,Changes every billing cycle
+BONUS_POINTS_AMT,cycle,Changes every billing cycle
+BONUS_POINTS_IND,account,Rewards enrolment indicator
+BUREAU_SCORE,cycle,Changes every billing cycle
+BUREAU_SCORE_DATE,cycle,Changes every billing cycle
+BUREAU_SCORE_REASON_CODE_1,cycle,Changes every billing cycle
+BUREAU_SCORE_REASON_CODE_2,cycle,Changes every billing cycle
+BUREAU_SCORE_REASON_CODE_3,cycle,Changes every billing cycle
+BUREAU_SCORE_REASON_CODE_4,cycle,Changes every billing cycle
+BUREAU_SCORE_REASON_CODE_5,cycle,Changes every billing cycle
+CASH_ADV_AMT,cycle,Changes every billing cycle
+CASH_ADV_CREDIT_LINE,cycle,Changes every billing cycle
+CASH_ADV_FEES,cycle,Changes every billing cycle
+CASH_ADV_PRINCIPAL_AMT,cycle,Changes every billing cycle
+CASH_ADV_QTY,cycle,Changes every billing cycle
+CDCI_LOAD_DATE,cycle,Changes every billing cycle
+CLIENT_ID,account,Client (portfolio) identifier
+CLIENT_KEY,account,Client surrogate key
+CRDT_BUREAU_SPCL_CMNT_CODE,cycle,Changes every billing cycle
+CREDIT_BUREAU_FLAG,account,Bureau reporting flag for the account
+CREDIT_BUREAU_MONITOR_CODE,account,Bureau monitoring code
+CREDIT_LIFE_CHARGE_AMT,cycle,Changes every billing cycle
+CREDIT_LIMIT_AMT,cycle,Changes every billing cycle
+CREDIT_LIMIT_CHANGE_TYPE,cycle,Changes every billing cycle
+CURRENT_ACCOUNT_NBR,account,Card account number (PII-like identifier)
+CURRENT_DUE_FLAG,cycle,Changes every billing cycle
+CURRENT_RECENCY_NBR,cycle,Changes every billing cycle
+CURR_MNTH_BALANCE_AMT,cycle,Changes every billing cycle
+CYCLE_BALANCE_QTY,cycle,Changes every billing cycle
+DELQ_DATE,cycle,Changes every billing cycle
+DEP_STRATEGY_ID,cycle,Changes every billing cycle
+DUE_36_PROFILE,cycle,Changes every billing cycle
+EBILL_IND,account,E-statement enrolment
+EXTERNAL_STATUS,account,Current external status
+EXTERNAL_STATUS_REASON_CODE,account,Reason for the external status
+FDR_RECORD_FORMAT,account,Processor record format
+FINANCE_CHARGES_PAID,cycle,Changes every billing cycle
+FINANCE_CHARGE_AMT_BILLED_TOT,cycle,Changes every billing cycle
+FINANCE_CHARGE_AMT_ON_CASH_ADV,cycle,Changes every billing cycle
+FINANCE_CHARGE_RATE,cycle,Changes every billing cycle
+FINANCIAL_ACTIVE_STATUS,account,Current financial-active status
+GRACE_DAY_ID,cycle,Changes every billing cycle
+GROSS_SALES,cycle,Changes every billing cycle
+INSTALLMENT_PYMT_DUE,cycle,Changes every billing cycle
+INTERNAL_STATUS,account,Current internal status
+LAST_BONUS_STRATEGY,cycle,Changes every billing cycle
+LAST_CASH_ADV_MIN_PAY_DUE,cycle,Changes every billing cycle
+LAST_CASH_APR,cycle,Changes every billing cycle
+LAST_CASH_END_AMT,cycle,Changes every billing cycle
+LAST_CASH_MUF_AMT,cycle,Changes every billing cycle
+LAST_CASH_MUF_INT_AMT,cycle,Changes every billing cycle
+LAST_EXTENDED_DATE,cycle,Changes every billing cycle
+LAST_FLAP_INT_AMT,cycle,Changes every billing cycle
+LAST_FLAP_MIN_PAY_DUE_AMT,cycle,Changes every billing cycle
+LAST_GROSS_ADB_CASH_AMT,cycle,Changes every billing cycle
+LAST_GROSS_ADB_MRCH_AMT,cycle,Changes every billing cycle
+LAST_MRCH_1_CYC_UNPAID_AMT,cycle,Changes every billing cycle
+LAST_MRCH_2_CYC_UNPAID_AMT,cycle,Changes every billing cycle
+LAST_MRCH_APR,cycle,Changes every billing cycle
+LAST_PRICING_STRATEGY,cycle,Changes every billing cycle
+LAST_PYMT_DATE,cycle,Changes every billing cycle
+LAST_PYMT_EFFECTIVE_DATE,cycle,Changes every billing cycle
+LAST_STMT_DATE,cycle,Changes every billing cycle
+LAST_STMT_MRCH_MUF_AMT,cycle,Changes every billing cycle
+LAST_STMT_MRCH_MUF_INTSC_AMT,cycle,Changes every billing cycle
+LAST_STMT_MRCH_MUF_INT_AMT,cycle,Changes every billing cycle
+LAST_STMT_PYMT_AMT,cycle,Changes every billing cycle
+LATE_CHARGES,cycle,Changes every billing cycle
+LATE_CHARGE_ASSESSED,cycle,Changes every billing cycle
+LATE_FEE_HIST_CODE,cycle,Changes every billing cycle
+LATE_FEE_ON_CASH_ADVANCE,cycle,Changes every billing cycle
+LATE_FEE_TIRD_BAL_AMT,cycle,Changes every billing cycle
+LATE_FEE_WAIVER_CHARGE,cycle,Changes every billing cycle
+LOAD_EVENT_SEQ,cycle,Changes every billing cycle
+MERCHANDISE_AMT,cycle,Changes every billing cycle
+MERCHANDISE_FINANCE_CHARGES,cycle,Changes every billing cycle
+MERCHANDISE_PRINCIPAL_AMT,cycle,Changes every billing cycle
+MERCHANDISE_QTY,cycle,Changes every billing cycle
+MIN_FINANCE_CHARGE_GAIN,cycle,Changes every billing cycle
+MIN_PAY_OVERRIDE_CODE,cycle,Changes every billing cycle
+MIN_PYMT_AMT,cycle,Changes every billing cycle
+MIN_PYMT_FLAG,cycle,Changes every billing cycle
+MISC_1,cycle,Changes every billing cycle
+MISC_AMT,cycle,Changes every billing cycle
+MTH_CODE,cycle,Changes every billing cycle
+NBR_DAYS_DELQ_AT_CYC,cycle,Changes every billing cycle
+NBR_MTHS_DUE,cycle,Changes every billing cycle
+NBR_OF_HIGH_DUE_EVER,cycle,Changes every billing cycle
+NBR_OF_MTHS_LAST_EXTENDED,cycle,Changes every billing cycle
+NBR_PYMTS_LAST_BILLING_CYCLE,cycle,Changes every billing cycle
+NBR_TIMES_EXTENDED,cycle,Changes every billing cycle
+NET_OF_GROSS_SALES,cycle,Changes every billing cycle
+NET_SALES,cycle,Changes every billing cycle
+OPEN_TO_BUY_AMT,cycle,Changes every billing cycle
+OVERLIMIT_CHARGE_AMT,cycle,Changes every billing cycle
+OVERLIMIT_FEE_WAIVER,cycle,Changes every billing cycle
+PAID_IN_FULL_CNT,cycle,Changes every billing cycle
+PAST_DUE_1_AMT,cycle,Changes every billing cycle
+PAST_DUE_2_AMOUNT,cycle,Changes every billing cycle
+PAST_DUE_3_AMOUNT,cycle,Changes every billing cycle
+PAST_DUE_4_AMOUNT,cycle,Changes every billing cycle
+PAST_DUE_5PLUS_AMOUNT,cycle,Changes every billing cycle
+PAYMENT_HIST_1_12_MTHS,cycle,Changes every billing cycle
+PERMANENT_COLLECTOR_CODE,account,Assigned permanent collector
+PFST_ATTRITION_SCORE,cycle,Changes every billing cycle
+PFST_ATTR_RSN1_CD,cycle,Changes every billing cycle
+PFST_ATTR_RSN2_CD,cycle,Changes every billing cycle
+PFST_ATTR_RSN3_CD,cycle,Changes every billing cycle
+PFST_CREDIT_RISK_REASON_1,cycle,Changes every billing cycle
+PFST_CREDIT_RISK_REASON_2,cycle,Changes every billing cycle
+PFST_CREDIT_RISK_REASON_3,cycle,Changes every billing cycle
+PFST_CREDIT_SCORE,cycle,Changes every billing cycle
+PFST_PROFIT_PREDICTION,cycle,Changes every billing cycle
+PFST_REVENUE_PREDICTION,cycle,Changes every billing cycle
+PFST_REVN_RSN1_CD,cycle,Changes every billing cycle
+PFST_REVN_RSN2_CD,cycle,Changes every billing cycle
+PFST_REVN_RSN3_CD,cycle,Changes every billing cycle
+PFST_SCORE_LAST_DATE,cycle,Changes every billing cycle
+PREV_BALANCE,cycle,Changes every billing cycle
+PREV_CREDIT_LINE_AMT,cycle,Changes every billing cycle
+PREV_EXTENDED_DATE,cycle,Changes every billing cycle
+PREV_REAGE_DATE,cycle,Changes every billing cycle
+PREV_STMT_DATE,cycle,Changes every billing cycle
+PRFT_SCR1_CD,cycle,Changes every billing cycle
+PRFT_SCR2_CD,cycle,Changes every billing cycle
+PRFT_SCR3_CD,cycle,Changes every billing cycle
+PRFT_SCR4_CD,cycle,Changes every billing cycle
+PRIN,cycle,Changes every billing cycle
+PRIOR_REAGE_DATE,cycle,Changes every billing cycle
+PROMO_BALANCE_AMT,cycle,Changes every billing cycle
+PROMO_FC_AMT,cycle,Changes every billing cycle
+PROMO_SALES,cycle,Changes every billing cycle
+PRTC_BLNC_CD,cycle,Changes every billing cycle
+PYMT_AMT,cycle,Changes every billing cycle
+PYMT_DUE_DATE,cycle,Changes every billing cycle
+QTY_PROMO_RETURNS,cycle,Changes every billing cycle
+QTY_PROMO_SALES,cycle,Changes every billing cycle
+REBATES_PAID_AMT,cycle,Changes every billing cycle
+RECOVERY_IND,account,Recovery indicator
+RELATIONSHIP_IND,account,Relationship indicator
+RETURN_AMT,cycle,Changes every billing cycle
+RETURN_CHECK_CNT_2YR,cycle,Changes every billing cycle
+RETURN_CHECK_CNT_LAST_MTH,cycle,Changes every billing cycle
+RETURN_CHECK_CNT_PY,cycle,Changes every billing cycle
+RETURN_CHECK_CNT_TOTAL,cycle,Changes every billing cycle
+RETURN_CHECK_CNT_YTD,cycle,Changes every billing cycle
+RETURN_QTY,cycle,Changes every billing cycle
+RISK_PREDICTOR_SCORE_ID,cycle,Changes every billing cycle
+ROLL_FC_AMT,cycle,Changes every billing cycle
+SALE_AMT,cycle,Changes every billing cycle
+SALE_ITEM_FEE_AMT,cycle,Changes every billing cycle
+SALE_QTY,cycle,Changes every billing cycle
+SECURITIZATION_CODE,account,Securitization code
+SECURITIZATION_PORTFOLIO_NBR,account,Securitization portfolio
+SELL_TO_LIMIT_AMT,cycle,Changes every billing cycle
+SPECIAL_ACTIVE_ACCOUNT_IND,account,Special active account indicator
+SPECIAL_CONDITION_5,cycle,Changes every billing cycle
+STMT_BALANCE_AMT,cycle,Changes every billing cycle
+STMT_LIFE_INSURANCE_PREM,cycle,Changes every billing cycle
+SYS,account,Processing system
+TEMPORARY_COLLECTOR_CODE,cycle,Changes every billing cycle
+TOTAL_FEES_AMT,cycle,Changes every billing cycle
+TOTAL_PAST_DUE_AMT,cycle,Changes every billing cycle
+TOTAL_PRINCIPAL_AMT,cycle,Changes every billing cycle
+TOTAL_YTD_FEE_AM,cycle,Changes every billing cycle
+TOTAL_YTD_INTR_AM,cycle,Changes every billing cycle
+UNPAID_FINANCE_CHARGES,cycle,Changes every billing cycle
+UNPAID_INSURANCE_CHARGES_AMT,cycle,Changes every billing cycle
+UNPAID_INTEREST_SERVICE_CHARGE,cycle,Changes every billing cycle
+UNPAID_LATE_CHARGE_AMT,cycle,Changes every billing cycle
+UNPAID_MISC_CHARGES_AMT,cycle,Changes every billing cycle
+UPC_1,cycle,Changes every billing cycle
+WORKOUT_REAGE_DATE,cycle,Changes every billing cycle
+WRITEOFF_AMT,cycle,Changes every billing cycle
+WRITEOFF_DATE,account,Account charge-off date
+YTD_ANNL_CHRG_AMT,cycle,Changes every billing cycle
+YTD_CASH_ADV_INTR_CHRG_AMT,cycle,Changes every billing cycle
+YTD_CASH_ADV_ITEM_CHRG_AMT,cycle,Changes every billing cycle
+YTD_CRDT_LIFE_FEES_AMT,cycle,Changes every billing cycle
+YTD_CRDT_LIFE_INTR_AMT,cycle,Changes every billing cycle
+YTD_CSTM_FEES_CHRG_AMT,cycle,Changes every billing cycle
+YTD_CSTM_INTR_CHRG_AMT,cycle,Changes every billing cycle
+YTD_DCLN_AUTH_CHRG_AMT,cycle,Changes every billing cycle
+YTD_LATE_CHRG_AMT,cycle,Changes every billing cycle
+YTD_MIN_FIN_CHRG_AMT,cycle,Changes every billing cycle
+YTD_MISC_FEES_AMT,cycle,Changes every billing cycle
+YTD_MISC_INTR_AMT,cycle,Changes every billing cycle
+YTD_MMB_FEES_AMT,cycle,Changes every billing cycle
+YTD_MMB_INTR_AMT,cycle,Changes every billing cycle
+YTD_MRCH_INTR_CHRG_AMT,cycle,Changes every billing cycle
+YTD_MRCH_ITEM_CHRG_AMT,cycle,Changes every billing cycle
+YTD_NSF_CHRG_AMT,cycle,Changes every billing cycle
+YTD_OIF_CHRG_AMT,cycle,Changes every billing cycle
+YTD_OVRL_CHRG_AMT,cycle,Changes every billing cycle
+YTD_STMT_CHRG_AMT,cycle,Changes every billing cycle

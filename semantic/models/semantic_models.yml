@@ -1,0 +1,471 @@
+# ======================================================================
+# ConversAI unified semantic layer - first 20 fields of CARD_ACCOUNT_SYNTHETIC,
+# split into ACCOUNT_DIM (one row per account) and ACCOUNT_CYCLE_FACT (one row per
+# account per monthly billing cycle).
+#
+# Business meaning is defined once, here, in engine-neutral SQL expressions
+# (CASE, COALESCE, LAG, GREATEST work the same in DuckDB, Oracle and BigQuery).
+# Physical table locations per engine live in ../../targets.yaml.
+#
+# Descriptions come from the data dictionary; code meanings from the business
+# reference sheets. config.meta.synonyms are the words people actually use;
+# they go into the model's context next to each name.
+#
+# Two kinds of numbers (config.meta.kind on each measure):
+#   snapshot - a balance-sheet value at a cycle (balance, limit, score, status).
+#              Never summed across months: for each account the LATEST cycle in the
+#              period is used (non_additive_dimension). Grouped by month, that is
+#              each account's cycle in that month.
+#   flow     - an amount that happens during a cycle (payments, fees, sales,
+#              charge-offs). Summed over every cycle in the period.
+# ======================================================================
+semantic_models:
+
+  # -------------------------------------------------------------- ACCOUNT_DIM
+  - name: account
+    description: >
+      Credit card account attributes that do not change cycle to cycle (ACCOUNT_DIM).
+      One row per account.
+    model: ref('account')
+    entities:
+      - name: account
+        type: primary
+        expr: ACCOUNT_KEY
+        description: Unique surrogate key identifying the credit card account. Primary join key.
+
+    dimensions:
+      - name: internal_status
+        type: categorical
+        expr: "COALESCE(INTERNAL_STATUS, '(blank)')"
+        description: >
+          Internal account status code used by the servicing system (distinct from external status).
+          Codes: D Delinquent, N Credit Balance, O Overlimit, X Delinquent & Overlimit, (blank) Normal.
+        config: { meta: { synonyms: [servicing status, internal status code, account status] } }
+
+      - name: internal_status_desc
+        type: categorical
+        expr: >
+          CASE INTERNAL_STATUS WHEN 'D' THEN 'Delinquent' WHEN 'N' THEN 'Credit Balance'
+          WHEN 'O' THEN 'Overlimit' WHEN 'X' THEN 'Delinquent & Overlimit' ELSE 'Normal' END
+        description: "Internal status in words: Normal, Delinquent, Credit Balance, Overlimit, Delinquent & Overlimit."
+        config: { meta: { synonyms: [internal status, status description] } }
+
+      - name: external_status
+        type: categorical
+        expr: "COALESCE(EXTERNAL_STATUS, '(blank)')"
+        description: >
+          Account status code as reported externally (e.g. to the credit bureau).
+          Codes: C Closed, E Revoked, F Frozen, I Interest Accrual Prohibited, L Lost, U Stolen,
+          Z Charged Off, (blank) Normal.
+        config: { meta: { synonyms: [bureau status, external status code, reported status] } }
+
+      - name: external_status_desc
+        type: categorical
+        expr: >
+          CASE EXTERNAL_STATUS WHEN 'C' THEN 'Closed' WHEN 'E' THEN 'Revoked' WHEN 'F' THEN 'Frozen'
+          WHEN 'I' THEN 'Interest Accrual Prohibited' WHEN 'L' THEN 'Lost' WHEN 'U' THEN 'Stolen'
+          WHEN 'Z' THEN 'Charged Off' ELSE 'Normal' END
+        description: "External status in words: Normal, Closed, Revoked, Frozen, Interest Accrual Prohibited, Lost, Stolen, Charged Off."
+        config: { meta: { synonyms: [external status, open or closed] } }
+
+      - name: ebill_ind
+        type: categorical
+        expr: "COALESCE(EBILL_IND, '(blank)')"
+        description: >
+          Electronic billing (paperless statements) participation code. Codes: 0, B (hardcopy and
+          electronic), C, T, X; (blank) = does not participate in e-bill.
+        config: { meta: { synonyms: [ebill code, e-statement code] } }
+
+      - name: paperless
+        type: categorical
+        expr: "CASE WHEN EBILL_IND IS NULL THEN 'N' ELSE 'Y' END"
+        description: >
+          Y if the cardholder participates in electronic billing (any e-bill code), N if not (blank code).
+          'Paper' accounts are paperless = N.
+        config: { meta: { synonyms: [ebill, e-bill, paperless billing, electronic statements, enrolled in ebill, paper statements] } }
+
+      - name: bankruptcy_code
+        type: categorical
+        expr: BANKRUPTCY_CODE
+        description: >
+          Bankruptcy status code. Codes: 0 Not bankrupt, C Reaffirmation confirmed, P Reaffirmation pending,
+          R Reaffirmed, X Bankrupt, Y Not reported as bankrupt prior to write-off.
+        config: { meta: { synonyms: [bankruptcy status code, BK code] } }
+
+      - name: bankruptcy_status
+        type: categorical
+        expr: >
+          CASE BANKRUPTCY_CODE WHEN '0' THEN 'Not bankrupt' WHEN 'C' THEN 'Reaffirmation confirmed'
+          WHEN 'P' THEN 'Reaffirmation pending' WHEN 'R' THEN 'Reaffirmed' WHEN 'X' THEN 'Bankrupt'
+          WHEN 'Y' THEN 'Not reported as bankrupt prior to write-off' ELSE 'Unknown' END
+        description: Bankruptcy status in words.
+        config: { meta: { synonyms: [bankruptcy, bankrupt, BK status] } }
+
+      - name: charged_off
+        type: categorical
+        expr: "CASE WHEN WRITEOFF_DATE IS NOT NULL THEN 'Y' ELSE 'N' END"
+        description: Y if the account has been charged off (has a write-off date), N otherwise.
+        config: { meta: { synonyms: [written off, charge-off flag, bad debt] } }
+
+      - name: writeoff_date
+        type: time
+        expr: WRITEOFF_DATE
+        type_params: { time_granularity: day }
+        description: Date the account balance was charged off as uncollectible. Empty for accounts never charged off.
+        config: { meta: { synonyms: [charge-off date, write-off date, date charged off] } }
+
+  # ------------------------------------------------------- ACCOUNT_CYCLE_FACT
+  - name: account_cycle
+    description: >
+      One row per account per monthly billing cycle (ACCOUNT_CYCLE_FACT): balances, limits, scores,
+      delinquency, payments, fees, spend and charge-offs as of the cycle close.
+    model: ref('account_cycle')
+    defaults:
+      agg_time_dimension: billing_month
+    entities:
+      - name: account_cycle
+        type: primary
+        expr: ACCOUNT_HISTORY_KEY
+        description: Surrogate key for one billing-cycle snapshot row of an account.
+      - name: account
+        type: foreign
+        expr: ACCOUNT_KEY
+        description: The account this cycle belongs to (joins to ACCOUNT_DIM).
+
+    dimensions:
+      # ---- time
+      - name: billing_month
+        type: time
+        expr: "DATE_TRUNC('month', BILLING_CYCLE_DATE)"
+        type_params: { time_granularity: month }
+        description: >
+          Calendar month of the billing cycle close. This is the date every cycle metric is reported by
+          (metric_time). Each account has one cycle per month.
+        config: { meta: { synonyms: [month, statement month, cycle month, period] } }
+
+      - name: billing_cycle_date
+        type: time
+        expr: BILLING_CYCLE_DATE
+        type_params: { time_granularity: day }
+        description: Date of the account's billing cycle close (statement date).
+        config: { meta: { synonyms: [statement date, cycle date, cycle close date] } }
+
+      # ---- delinquency
+      - name: days_past_due
+        type: categorical
+        expr: NBR_DAYS_DELQ_AT_CYC
+        description: >
+          Number of days the account was delinquent as of the billing cycle close (0 = current; then 30/31,
+          60/61 ...). Numeric: filter with >= 30, >= 60, >= 90.
+        config: { meta: { synonyms: [DPD, days delinquent, days late] } }
+
+      - name: delinquency_bucket
+        type: categorical
+        expr: >
+          CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN '0 Current'
+               WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN '1 30-59 DPD'
+               WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN '2 60-89 DPD'
+               WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN '3 90-119 DPD'
+               WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN '4 120-179 DPD'
+               ELSE '5 180+ DPD' END
+        description: "Days-past-due bucket at the cycle close: 0 Current, 1 30-59 DPD, 2 60-89 DPD, 3 90-119 DPD, 4 120-179 DPD, 5 180+ DPD."
+        config: { meta: { synonyms: [aging bucket, delinquency status, DPD bucket, cycle bucket] } }
+
+      - name: prior_delinquency_bucket
+        type: categorical
+        expr: >
+          CASE WHEN LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) IS NULL THEN 'n/a'
+               WHEN LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) < 30 THEN '0 Current'
+               WHEN LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) < 60 THEN '1 30-59 DPD'
+               WHEN LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) < 90 THEN '2 60-89 DPD'
+               WHEN LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) < 120 THEN '3 90-119 DPD'
+               WHEN LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) < 180 THEN '4 120-179 DPD'
+               ELSE '5 180+ DPD' END
+        description: >
+          The account's delinquency bucket at its PREVIOUS billing cycle (n/a for its first cycle in the data).
+          Use with delinquency metrics for roll rates, e.g. 30+ rate where prior bucket = '0 Current'
+          is the share of last month's current accounts that rolled to 30+.
+        config: { meta: { synonyms: [previous bucket, last month's bucket, roll from, prior DPD] } }
+
+      - name: delinquency_trend
+        type: categorical
+        expr: >
+          CASE WHEN LAG(NBR_DAYS_DELQ_AT_CYC) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) IS NULL THEN 'n/a'
+               WHEN (CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN 0 WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN 1
+                          WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN 2 WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN 3
+                          WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN 4 ELSE 5 END)
+                  < LAG(CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN 0 WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN 1
+                             WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN 2 WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN 3
+                             WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN 4 ELSE 5 END)
+                        OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) THEN 'Improved'
+               WHEN (CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN 0 WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN 1
+                          WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN 2 WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN 3
+                          WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN 4 ELSE 5 END)
+                  > LAG(CASE WHEN NBR_DAYS_DELQ_AT_CYC < 30 THEN 0 WHEN NBR_DAYS_DELQ_AT_CYC < 60 THEN 1
+                             WHEN NBR_DAYS_DELQ_AT_CYC < 90 THEN 2 WHEN NBR_DAYS_DELQ_AT_CYC < 120 THEN 3
+                             WHEN NBR_DAYS_DELQ_AT_CYC < 180 THEN 4 ELSE 5 END)
+                        OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) THEN 'Worsened'
+               ELSE 'Same' END
+        description: >
+          Delinquency at this cycle compared with the account's previous cycle, by days-past-due bucket
+          (0 Current, 30-59, 60-89, 90-119, 120-179, 180+): Improved = moved to a better bucket (cured or
+          partly cured), Worsened = rolled to a worse bucket, Same = same bucket (most accounts: current both
+          cycles), n/a = first cycle in the data. "Did not improve" = Same or Worsened; to look only at
+          accounts that were delinquent, also filter prior_delinquency_bucket != '0 Current'.
+        config: { meta: { synonyms: [cure, cured, roll, rolled forward, delinquency change, delinquency improved] } }
+
+      - name: book_status
+        type: categorical
+        expr: "CASE WHEN WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0 THEN 'Active' ELSE 'Charged off' END"
+        description: >
+          Active = still on the receivables book at this cycle. Charged off = written off in this cycle or
+          earlier (charged-off accounts keep reporting a few cycles with zero balance and limit).
+        config: { meta: { synonyms: [on book, receivable status] } }
+
+      # ---- scores
+      - name: bureau_score
+        type: categorical
+        expr: BUREAU_SCORE
+        description: External credit bureau score (FICO-style, 0-950) for the account holder at the cycle. Numeric, filter with < or >=.
+        config: { meta: { synonyms: [FICO, credit score, bureau] } }
+
+      - name: bureau_score_band
+        type: categorical
+        expr: >
+          CASE WHEN BUREAU_SCORE < 580 THEN '1 <580'
+               WHEN BUREAU_SCORE < 670 THEN '2 580-669'
+               WHEN BUREAU_SCORE < 740 THEN '3 670-739'
+               ELSE '4 740+' END
+        description: "Bureau score band at the cycle: 1 <580 (deep subprime), 2 580-669 (near prime), 3 670-739 (prime), 4 740+ (super prime)."
+        config: { meta: { synonyms: [FICO band, credit tier, score band, risk tier] } }
+
+      - name: behavior_score
+        type: categorical
+        expr: BEHAVIOR_SCORE
+        description: >
+          Internal behavior score (0-999) predicting the probability the account pays, from its payment and
+          usage history. Higher is better. Numeric, filter with < or >=.
+        config: { meta: { synonyms: [behaviour score, internal score, B-score] } }
+
+      - name: behavior_score_band
+        type: categorical
+        expr: >
+          CASE WHEN BEHAVIOR_SCORE < 500 THEN '1 <500'
+               WHEN BEHAVIOR_SCORE < 600 THEN '2 500-599'
+               WHEN BEHAVIOR_SCORE < 700 THEN '3 600-699'
+               ELSE '4 700+' END
+        description: "Behavior score band at the cycle: 1 <500, 2 500-599, 3 600-699, 4 700+ (higher = more likely to pay)."
+        config: { meta: { synonyms: [behaviour band, behavior tier] } }
+
+      - name: behavior_score_trend
+        type: categorical
+        expr: >
+          CASE WHEN LAG(BEHAVIOR_SCORE) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) IS NULL THEN 'n/a'
+               WHEN BEHAVIOR_SCORE > LAG(BEHAVIOR_SCORE) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) THEN 'Improved'
+               WHEN BEHAVIOR_SCORE < LAG(BEHAVIOR_SCORE) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) THEN 'Worsened'
+               ELSE 'Same' END
+        description: >
+          Behavior score at this cycle compared with the account's previous cycle: Improved = higher (more
+          likely to pay), Worsened = lower, Same = unchanged, n/a = first cycle in the data. Any change counts.
+        config: { meta: { synonyms: [behaviour score change, score improved, score went up, score dropped, B-score trend] } }
+
+      # ---- utilization
+      - name: utilization_band
+        type: categorical
+        expr: >
+          CASE WHEN CREDIT_LIMIT_AMT <= 0 THEN 'n/a no limit'
+               WHEN CURR_MNTH_BALANCE_AMT < 0.30 * CREDIT_LIMIT_AMT THEN '1 <30%'
+               WHEN CURR_MNTH_BALANCE_AMT <= 0.80 * CREDIT_LIMIT_AMT THEN '2 30-80%'
+               ELSE '3 >80%' END
+        description: >
+          Credit utilization (statement balance / credit limit) band at the cycle: 1 <30%, 2 30-80%,
+          3 >80% (includes overlimit), n/a no limit (charged-off cycles).
+        config: { meta: { synonyms: [utilization, usage band, utilisation, high utilization, maxed out] } }
+
+      # ---- payment behaviour
+      - name: paid_minimum_due
+        type: categorical
+        expr: >
+          CASE WHEN COALESCE(LAG(MIN_PYMT_AMT) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE), 0) <= 0 THEN 'n/a'
+               WHEN PYMT_AMT >= LAG(MIN_PYMT_AMT) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) THEN 'Y'
+               ELSE 'N' END
+        description: >
+          Y if the payment posted in this cycle covered the minimum payment due from the previous statement,
+          N if not, n/a if no minimum was due (or it is the account's first cycle in the data).
+        config: { meta: { synonyms: [paid minimum, made minimum payment, missed payment] } }
+
+    measures:
+      # ======== snapshot: latest cycle per account in the period
+      - name: accounts_snap
+        description: Distinct accounts (latest cycle per account)
+        agg: count_distinct
+        expr: ACCOUNT_KEY
+        non_additive_dimension: &latest { name: billing_month, window_choice: max, window_groupings: [account] }
+        config: { meta: { kind: snapshot } }
+      - name: active_accounts_snap
+        description: Distinct accounts still on book (not charged off) at their latest cycle
+        agg: count_distinct
+        expr: "CASE WHEN WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0 THEN ACCOUNT_KEY END"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: dq30_accounts_snap
+        description: Active accounts 30+ days past due at their latest cycle
+        agg: count_distinct
+        expr: "CASE WHEN WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0 AND NBR_DAYS_DELQ_AT_CYC >= 30 THEN ACCOUNT_KEY END"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: dq60_accounts_snap
+        description: Active accounts 60+ days past due at their latest cycle
+        agg: count_distinct
+        expr: "CASE WHEN WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0 AND NBR_DAYS_DELQ_AT_CYC >= 60 THEN ACCOUNT_KEY END"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: dq90_accounts_snap
+        description: Active accounts 90+ days past due at their latest cycle
+        agg: count_distinct
+        expr: "CASE WHEN WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0 AND NBR_DAYS_DELQ_AT_CYC >= 90 THEN ACCOUNT_KEY END"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: balance_snap
+        description: Statement balance, USD (CURR_MNTH_BALANCE_AMT)
+        agg: sum
+        expr: CURR_MNTH_BALANCE_AMT
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: active_balance_snap
+        description: Statement balance of active (not charged-off) cycles, USD
+        agg: sum
+        expr: "CASE WHEN WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0 THEN CURR_MNTH_BALANCE_AMT ELSE 0 END"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: dq30_balance_snap
+        description: Statement balance of active accounts 30+ days past due, USD
+        agg: sum
+        expr: "CASE WHEN WRITEOFF_AMT = 0 AND CREDIT_LIMIT_AMT > 0 AND NBR_DAYS_DELQ_AT_CYC >= 30 THEN CURR_MNTH_BALANCE_AMT ELSE 0 END"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: balance_over_80_snap
+        description: Statement balance of accounts above 80% utilization, USD
+        agg: sum
+        expr: "CASE WHEN CREDIT_LIMIT_AMT > 0 AND CURR_MNTH_BALANCE_AMT > 0.80 * CREDIT_LIMIT_AMT THEN CURR_MNTH_BALANCE_AMT ELSE 0 END"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: credit_limit_snap
+        description: Credit limit, USD (CREDIT_LIMIT_AMT)
+        agg: sum
+        expr: CREDIT_LIMIT_AMT
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: open_to_buy_snap
+        description: Open to buy (available credit), USD
+        agg: sum
+        expr: OPEN_TO_BUY_AMT
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: past_due_snap
+        description: Total past-due amount, USD
+        agg: sum
+        expr: TOTAL_PAST_DUE_AMT
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: min_payment_due_snap
+        description: Minimum payment due on the statement, USD
+        agg: sum
+        expr: MIN_PYMT_AMT
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: bureau_score_avg_snap
+        description: Average bureau score
+        agg: average
+        expr: BUREAU_SCORE
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: behavior_score_avg_snap
+        description: Average behavior score
+        agg: average
+        expr: BEHAVIOR_SCORE
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: days_past_due_avg_snap
+        description: Average days past due
+        agg: average
+        expr: NBR_DAYS_DELQ_AT_CYC
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: purchase_apr_avg_snap
+        description: Average purchase APR, percent
+        agg: average
+        expr: LAST_MRCH_APR
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: apr_x_balance_snap
+        description: Purchase APR times positive statement balance (numerator of balance-weighted APR)
+        agg: sum
+        expr: "LAST_MRCH_APR * GREATEST(CURR_MNTH_BALANCE_AMT, 0)"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: positive_balance_snap
+        description: Positive statement balance, USD (credit balances count as 0)
+        agg: sum
+        expr: "GREATEST(CURR_MNTH_BALANCE_AMT, 0)"
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: min_due_accounts_snap
+        description: Accounts that had a minimum payment due from the previous statement (latest cycle)
+        agg: count_distinct
+        expr: >
+          CASE WHEN COALESCE(LAG(MIN_PYMT_AMT) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE), 0) > 0
+               THEN ACCOUNT_KEY END
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+      - name: paid_min_accounts_snap
+        description: Accounts whose payment covered the previous statement's minimum due (latest cycle)
+        agg: count_distinct
+        expr: >
+          CASE WHEN COALESCE(LAG(MIN_PYMT_AMT) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE), 0) > 0
+                AND PYMT_AMT >= LAG(MIN_PYMT_AMT) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE)
+               THEN ACCOUNT_KEY END
+        non_additive_dimension: *latest
+        config: { meta: { kind: snapshot } }
+
+      # ======== flow: summed over every cycle in the period
+      - name: payments
+        description: Payment amount posted, USD (PYMT_AMT)
+        agg: sum
+        expr: PYMT_AMT
+        config: { meta: { kind: flow } }
+      - name: late_fees
+        description: Late fee assessed, USD (LATE_CHARGE_ASSESSED)
+        agg: sum
+        expr: LATE_CHARGE_ASSESSED
+        config: { meta: { kind: flow } }
+      - name: chargeoff_amount
+        description: Amount charged off as uncollectible, USD (WRITEOFF_AMT)
+        agg: sum
+        expr: WRITEOFF_AMT
+        config: { meta: { kind: flow } }
+      - name: chargeoff_accounts_flow
+        description: Distinct accounts charged off during the period
+        agg: count_distinct
+        expr: "CASE WHEN WRITEOFF_AMT <> 0 THEN ACCOUNT_KEY END"
+        config: { meta: { kind: flow } }
+      - name: net_sales
+        description: Net purchases after returns and credits, USD (NET_SALES)
+        agg: sum
+        expr: NET_SALES
+        config: { meta: { kind: flow } }
+      - name: cash_advances
+        description: Cash advances taken, USD (CASH_ADV_AMT)
+        agg: sum
+        expr: CASH_ADV_AMT
+        config: { meta: { kind: flow } }
+      - name: cycle_balance_sum
+        description: Statement balance summed over every cycle in the period (denominator for period rates), USD
+        agg: sum
+        expr: CURR_MNTH_BALANCE_AMT
+        config: { meta: { kind: flow } }
+      - name: cycles
+        description: Number of account billing cycles (rows)
+        agg: count
+        expr: ACCOUNT_HISTORY_KEY
+        config: { meta: { kind: flow } }

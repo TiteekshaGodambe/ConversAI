@@ -1,0 +1,10 @@
+{
+  "name": "bureau_score_drop_50",
+  "kind": "dimension",
+  "model": "account_cycle",
+  "label": "Bureau score dropped 50+ points",
+  "description": "Y if the account's bureau score fell by 50 points or more since its previous billing cycle, N if not, n/a for its first cycle in the data.",
+  "expr": "CASE WHEN LAG(BUREAU_SCORE) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) IS NULL THEN 'n/a' WHEN LAG(BUREAU_SCORE) OVER (PARTITION BY ACCOUNT_KEY ORDER BY BILLING_CYCLE_DATE) - BUREAU_SCORE >= 50 THEN 'Y' ELSE 'N' END",
+  "choices": ["A drop of exactly 50 points counts", "Compared with the previous cycle only, not a longer window"],
+  "synonyms": ["bureau score dropped", "FICO drop"]
+}

@@ -1,0 +1,2 @@
+{"metrics": ["total_chargeoffs", "chargeoff_rate", "chargeoff_accounts"], "group_by": ["account__internal_status_desc"],
+ "order_by": ["-chargeoff_rate"]}

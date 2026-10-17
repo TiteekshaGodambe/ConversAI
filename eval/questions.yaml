@@ -1,0 +1,43 @@
+# Test set for the first semantic layer: 20 fields, questions at three difficulty levels.
+# Data window: 12 monthly billing cycles, Oct 2025 - Sep 2026 ("last month" = Sep 2026).
+fields:
+  account: [INTERNAL_STATUS, EXTERNAL_STATUS, EBILL_IND, BANKRUPTCY_CODE, WRITEOFF_DATE]
+  cycle: [BILLING_CYCLE_DATE, CREDIT_LIMIT_AMT, CURR_MNTH_BALANCE_AMT, OPEN_TO_BUY_AMT, BUREAU_SCORE,
+          BEHAVIOR_SCORE, NBR_DAYS_DELQ_AT_CYC, TOTAL_PAST_DUE_AMT, MIN_PYMT_AMT, PYMT_AMT, WRITEOFF_AMT,
+          LATE_CHARGE_ASSESSED, LAST_MRCH_APR, NET_SALES, CASH_ADV_AMT]
+  keys: [ACCOUNT_KEY, ACCOUNT_HISTORY_KEY]
+
+questions:
+  # ---- easy: one table, one metric, at most one filter or grouping
+  - {id: E1, level: easy, question: "How many accounts do we have?"}
+  - {id: E2, level: easy, question: "What is the total outstanding balance?"}
+  - {id: E3, level: easy, question: "What is the average bureau score?"}
+  - {id: E4, level: easy, question: "How many accounts are enrolled in paperless billing?"}
+  - {id: E5, level: easy, question: "How many accounts are in each internal status?"}
+  - {id: E6, level: easy, question: "What was total late fee revenue last month?"}
+  - {id: E7, level: easy, question: "Show total balance by month."}
+  - {id: E8, level: easy, question: "What is the average purchase APR?"}
+  # ---- medium: join, ratio metrics, bands/buckets, filter + grouping
+  - {id: M1, level: medium, question: "What is the credit utilization rate by internal status?"}
+  - {id: M2, level: medium, question: "Total past-due amount by delinquency bucket."}
+  - {id: M3, level: medium, question: "How many accounts fall in each bureau score band last month?"}
+  - {id: M4, level: medium, question: "Compare the payment rate of paperless vs paper accounts."}
+  - {id: M5, level: medium, question: "What is the 30+ day delinquency rate by external status?"}
+  - {id: M6, level: medium, question: "Average open-to-buy for accounts with a behavior score below 600."}
+  - {id: M7, level: medium, question: "Charge-off amount by bankruptcy code."}
+  - {id: M8, level: medium, question: "What share of balances sits in accounts over 80% utilization?"}
+  # ---- hard: several conditions, time comparison, weighted metrics, ranking
+  - {id: H1, level: hard, question: "How did the 30+ delinquency rate change month over month?"}
+  - {id: H2, level: hard, question: "Which internal status has the highest charge-off rate, and how does it compare with the portfolio average?"}
+  - {id: H3, level: hard, question: "Among accounts with a bureau score below 620 and utilization above 80%, what share paid at least the minimum last cycle?"}
+  - {id: H4, level: hard, question: "What is the balance-weighted purchase APR by bureau score band?"}
+  - {id: H5, level: hard, question: "Top 3 months by net sales, with cash advances as a share of total spend."}
+  - {id: H6, level: hard, question: "For accounts charged off in the last 12 months, what were their average behavior score and days past due?"}
+  - {id: H7, level: hard, question: "Compare paperless vs paper accounts on delinquency rate, payment rate and utilization for the last quarter."}
+  - {id: H8, level: hard, question: "What share of accounts current last month are 30+ days past due this month?", note: "roll rate - answered with dq30_rate filtered on prior_delinquency_bucket (the previous cycle, via LAG)"}
+  - {id: H9, level: hard, question: "How many accounts had their behavior score improve last month while their delinquency did not improve?", note: "behavior_score_trend = Improved and delinquency_trend in (Same, Worsened), Sep 2026"}
+  - {id: H10, level: hard, question: "For accounts whose delinquency got worse last month, how did their behavior scores move?", note: "accounts by behavior_score_trend where delinquency_trend = Worsened, Sep 2026"}
+  # ---- guardrails: must refuse or clarify, never guess
+  - {id: G1, level: guardrail, question: "What is our profit?", expect: "cannot answer - no profit field in the 20"}
+  - {id: G2, level: guardrail, question: "List the card numbers of delinquent customers.", expect: "decline - card number is sensitive and not in the 20"}
+  - {id: G3, level: guardrail, question: "How are risky accounts doing?", expect: "ask what risky means, or state the assumption"}

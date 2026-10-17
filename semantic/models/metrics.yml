@@ -1,0 +1,322 @@
+# ======================================================================
+# Governed metrics. The model may only ask for these by name; MetricFlow writes
+# the SQL. The definitions here ARE the business rules, e.g.:
+#   30+ delinquency rate = active accounts 30+ days past due / active accounts
+#   utilization          = statement balance / credit limit
+#   payment rate         = payments / statement balances over the same cycles
+#   charge-off rate      = amount charged off / statement balances over the same cycles
+# Snapshot metrics use each account's latest cycle in the period; flow metrics sum
+# every cycle (see semantic_models.yml). config.meta.kind says which.
+# ======================================================================
+metrics:
+
+  # ---------------------------------------------------------------- portfolio size
+  - name: accounts
+    label: Accounts
+    description: >
+      Number of accounts (each account counted once, at its latest cycle in the period). With no time filter
+      it covers the whole book, including charged-off accounts. For account attributes (status, paperless,
+      bankruptcy) do not add a month filter unless a period is asked for.
+    type: simple
+    type_params: { measure: accounts_snap }
+    config: { meta: { kind: snapshot, synonyms: [number of accounts, account count, how many accounts, customers, cards] } }
+
+  - name: active_accounts
+    label: Active accounts
+    description: Accounts still on book (not charged off) at their latest cycle in the period.
+    type: simple
+    type_params: { measure: active_accounts_snap }
+    config: { meta: { kind: snapshot, synonyms: [open accounts, accounts on book, live accounts] } }
+
+  - name: total_balance
+    label: Total balance (USD)
+    description: Sum of statement balances (CURR_MNTH_BALANCE_AMT), latest cycle per account. Outstanding receivables.
+    type: simple
+    type_params: { measure: balance_snap }
+    config: { meta: { kind: snapshot, synonyms: [outstanding balance, receivables, balances, total outstanding, exposure] } }
+
+  - name: avg_balance
+    label: Average balance per account (USD)
+    description: Total balance / accounts.
+    type: ratio
+    type_params: { numerator: total_balance, denominator: accounts }
+    config: { meta: { kind: snapshot, synonyms: [average balance, mean balance] } }
+
+  - name: total_credit_limit
+    label: Total credit limit (USD)
+    description: Sum of approved credit limits (CREDIT_LIMIT_AMT), latest cycle per account.
+    type: simple
+    type_params: { measure: credit_limit_snap }
+    config: { meta: { kind: snapshot, synonyms: [credit lines, total limit, approved limit] } }
+
+  - name: avg_credit_limit
+    label: Average credit limit (USD)
+    description: Total credit limit / active accounts.
+    type: ratio
+    type_params: { numerator: total_credit_limit, denominator: active_accounts }
+    config: { meta: { kind: snapshot, synonyms: [average limit, mean credit line] } }
+
+  - name: utilization_rate
+    label: Credit utilization rate
+    description: Total balance / total credit limit (a fraction; 0.38 = 38%). Latest cycle per account.
+    type: ratio
+    type_params: { numerator: total_balance, denominator: total_credit_limit }
+    config: { meta: { kind: snapshot, synonyms: [utilization, utilisation, credit usage, balance to limit] } }
+
+  - name: total_open_to_buy
+    label: Total open to buy (USD)
+    description: Sum of remaining available credit (OPEN_TO_BUY_AMT = credit limit - balance), latest cycle per account.
+    type: simple
+    type_params: { measure: open_to_buy_snap }
+    config: { meta: { kind: snapshot, synonyms: [available credit, OTB, unused credit, headroom] } }
+
+  - name: avg_open_to_buy
+    label: Average open to buy (USD)
+    description: Total open to buy / accounts.
+    type: ratio
+    type_params: { numerator: total_open_to_buy, denominator: accounts }
+    config: { meta: { kind: snapshot, synonyms: [average available credit, mean OTB] } }
+
+  - name: balance_over_80_util
+    label: Balance in accounts over 80% utilization (USD)
+    description: Statement balance of accounts whose balance is above 80% of their credit limit.
+    type: simple
+    type_params: { measure: balance_over_80_snap }
+    config: { meta: { kind: snapshot, synonyms: [high utilization balance, maxed out balance] } }
+
+  - name: high_util_balance_share
+    label: Share of balance over 80% utilization
+    description: Balance in accounts over 80% utilization / total balance (fraction).
+    type: ratio
+    type_params: { numerator: balance_over_80_util, denominator: total_balance }
+    config: { meta: { kind: snapshot, synonyms: [share of balances over 80% utilization, high utilization share] } }
+
+  # ---------------------------------------------------------------- scores
+  - name: avg_bureau_score
+    label: Average bureau score
+    description: Mean external bureau score (0-950), latest cycle per account.
+    type: simple
+    type_params: { measure: bureau_score_avg_snap }
+    config: { meta: { kind: snapshot, synonyms: [average FICO, average credit score, mean bureau score] } }
+
+  - name: avg_behavior_score
+    label: Average behavior score
+    description: Mean internal behavior score (0-999, higher = more likely to pay), latest cycle per account.
+    type: simple
+    type_params: { measure: behavior_score_avg_snap }
+    config: { meta: { kind: snapshot, synonyms: [average behaviour score, mean behavior score] } }
+
+  # ---------------------------------------------------------------- delinquency
+  - name: avg_days_past_due
+    label: Average days past due
+    description: Mean NBR_DAYS_DELQ_AT_CYC, latest cycle per account.
+    type: simple
+    type_params: { measure: days_past_due_avg_snap }
+    config: { meta: { kind: snapshot, synonyms: [average DPD, mean days delinquent] } }
+
+  - name: total_past_due
+    label: Total past-due amount (USD)
+    description: Sum of TOTAL_PAST_DUE_AMT (amount past due across all aging buckets), latest cycle per account.
+    type: simple
+    type_params: { measure: past_due_snap }
+    config: { meta: { kind: snapshot, synonyms: [past due, amount overdue, arrears] } }
+
+  - name: total_min_payment_due
+    label: Total minimum payment due (USD)
+    description: Sum of MIN_PYMT_AMT on the latest statement per account.
+    type: simple
+    type_params: { measure: min_payment_due_snap }
+    config: { meta: { kind: snapshot, synonyms: [minimum due, minimum payments] } }
+
+  - name: dq30_accounts
+    label: 30+ DPD accounts
+    description: Active accounts 30 or more days past due.
+    type: simple
+    type_params: { measure: dq30_accounts_snap }
+    config: { meta: { kind: snapshot, synonyms: [delinquent accounts, 30+ accounts, past due accounts] } }
+
+  - name: dq60_accounts
+    label: 60+ DPD accounts
+    description: Active accounts 60 or more days past due (seriously delinquent).
+    type: simple
+    type_params: { measure: dq60_accounts_snap }
+    config: { meta: { kind: snapshot, synonyms: [seriously delinquent accounts, 60+ accounts] } }
+
+  - name: dq90_accounts
+    label: 90+ DPD accounts
+    description: Active accounts 90 or more days past due.
+    type: simple
+    type_params: { measure: dq90_accounts_snap }
+    config: { meta: { kind: snapshot, synonyms: [severely delinquent accounts, 90+ accounts] } }
+
+  - name: dq30_rate
+    label: 30+ delinquency rate
+    description: 30+ DPD accounts / active accounts (fraction). Charged-off accounts are excluded from both.
+    type: ratio
+    type_params: { numerator: dq30_accounts, denominator: active_accounts }
+    config: { meta: { kind: snapshot, synonyms: [delinquency rate, 30+ rate, DQ rate, past due rate] } }
+
+  - name: dq60_rate
+    label: 60+ delinquency rate
+    description: 60+ DPD accounts / active accounts (fraction).
+    type: ratio
+    type_params: { numerator: dq60_accounts, denominator: active_accounts }
+    config: { meta: { kind: snapshot, synonyms: [serious delinquency rate, 60+ rate] } }
+
+  - name: dq90_rate
+    label: 90+ delinquency rate
+    description: 90+ DPD accounts / active accounts (fraction).
+    type: ratio
+    type_params: { numerator: dq90_accounts, denominator: active_accounts }
+    config: { meta: { kind: snapshot, synonyms: [90+ rate, severe delinquency rate] } }
+
+  - name: dq30_balance_rate
+    label: 30+ delinquency rate by balance
+    description: Balance of active 30+ DPD accounts / balance of active accounts (dollar-weighted delinquency).
+    type: ratio
+    type_params:
+      numerator: dq30_balance
+      denominator: active_balance
+    config: { meta: { kind: snapshot, synonyms: [dollar delinquency rate, balance delinquency rate] } }
+
+  - name: dq30_rate_mom_change
+    label: 30+ delinquency rate, change vs prior month
+    description: >
+      This month's 30+ delinquency rate minus the previous month's (fraction points). Group by
+      metric_time__month and request it together with dq30_rate, so each month shows the rate and its
+      change. The first month in the data has no prior month, so its change is empty.
+    type: derived
+    type_params:
+      expr: cur - prev
+      metrics:
+        - { name: dq30_rate, alias: cur }
+        - { name: dq30_rate, alias: prev, offset_window: 1 month }
+    config: { meta: { kind: snapshot, synonyms: [month over month change in delinquency, MoM delinquency change] } }
+
+  # ---------------------------------------------------------------- payments and fees
+  - name: total_payments
+    label: Total payments (USD)
+    description: Sum of PYMT_AMT posted over every cycle in the period.
+    type: simple
+    type_params: { measure: payments }
+    config: { meta: { kind: flow, synonyms: [payments, payment volume, collections, amount paid] } }
+
+  - name: payment_rate
+    label: Payment rate
+    description: Payments / statement balances over the same cycles (fraction). Higher = customers pay down faster.
+    type: ratio
+    type_params:
+      numerator: total_payments
+      denominator: cycle_balance
+    config: { meta: { kind: flow, synonyms: [paydown rate, monthly payment rate, MPR] } }
+
+  - name: paid_minimum_rate
+    label: Share paying at least the minimum
+    description: >
+      Accounts whose payment covered the previous statement's minimum due / accounts that had a minimum due
+      (latest cycle per account; use metric_time__month to pick the cycle).
+    type: ratio
+    type_params:
+      numerator: paid_min_accounts
+      denominator: min_due_accounts
+    config: { meta: { kind: snapshot, synonyms: [paid minimum, minimum payment rate, made minimum payment] } }
+
+  - name: late_fee_revenue
+    label: Late fee revenue (USD)
+    description: Sum of LATE_CHARGE_ASSESSED over every cycle in the period.
+    type: simple
+    type_params: { measure: late_fees }
+    config: { meta: { kind: flow, synonyms: [late fees, late charges, penalty fees] } }
+
+  # ---------------------------------------------------------------- losses
+  - name: total_chargeoffs
+    label: Charge-off amount (USD)
+    description: Sum of WRITEOFF_AMT (balances charged off as uncollectible) in the period.
+    type: simple
+    type_params: { measure: chargeoff_amount }
+    config: { meta: { kind: flow, synonyms: [charge-offs, write-offs, losses, gross charge-offs, bad debt] } }
+
+  - name: chargeoff_accounts
+    label: Accounts charged off
+    description: Distinct accounts charged off during the period.
+    type: simple
+    type_params: { measure: chargeoff_accounts_flow }
+    config: { meta: { kind: flow, synonyms: [number of charge-offs, written-off accounts] } }
+
+  - name: chargeoff_rate
+    label: Charge-off rate (period)
+    description: >
+      Charge-off amount / statement balances over the same cycles (fraction, average monthly rate for
+      the period; multiply by 12 to annualise).
+    type: ratio
+    type_params:
+      numerator: total_chargeoffs
+      denominator: cycle_balance
+    config: { meta: { kind: flow, synonyms: [loss rate, write-off rate, NCO rate] } }
+
+  # ---------------------------------------------------------------- pricing
+  - name: avg_purchase_apr
+    label: Average purchase APR (%)
+    description: Mean LAST_MRCH_APR (APR on purchase balances as of the last statement), latest cycle per account.
+    type: simple
+    type_params: { measure: purchase_apr_avg_snap }
+    config: { meta: { kind: snapshot, synonyms: [average APR, interest rate, purchase rate, merchandise APR] } }
+
+  - name: balance_weighted_apr
+    label: Balance-weighted purchase APR (%)
+    description: Sum(APR x positive balance) / sum(positive balance), latest cycle per account.
+    type: ratio
+    type_params:
+      numerator: apr_x_balance
+      denominator: positive_balance
+    config: { meta: { kind: snapshot, synonyms: [weighted APR, dollar-weighted APR, portfolio yield rate] } }
+
+  # ---------------------------------------------------------------- spend
+  - name: total_net_sales
+    label: Net sales (USD)
+    description: Sum of NET_SALES (purchases after returns and credits) over the period.
+    type: simple
+    type_params: { measure: net_sales }
+    config: { meta: { kind: flow, synonyms: [purchases, purchase volume, spend, sales] } }
+
+  - name: total_cash_advances
+    label: Cash advances (USD)
+    description: Sum of CASH_ADV_AMT over the period.
+    type: simple
+    type_params: { measure: cash_advances }
+    config: { meta: { kind: flow, synonyms: [cash advance volume, cash withdrawals] } }
+
+  - name: total_spend
+    label: Total spend (USD)
+    description: Net sales + cash advances.
+    type: derived
+    type_params:
+      expr: total_net_sales + total_cash_advances
+      metrics: [ { name: total_net_sales }, { name: total_cash_advances } ]
+    config: { meta: { kind: flow, synonyms: [total card spend, gross spend] } }
+
+  - name: cash_advance_share
+    label: Cash advances as share of spend
+    description: Cash advances / (net sales + cash advances) (fraction).
+    type: derived
+    type_params:
+      expr: total_cash_advances / (total_net_sales + total_cash_advances)
+      metrics: [ { name: total_net_sales }, { name: total_cash_advances } ]
+    config: { meta: { kind: flow, synonyms: [cash advance mix, cash share] } }
+
+  # ---------------------------------------------------------------- building blocks
+  # Hidden from the model (meta.hidden): only used inside the ratios above.
+  - { name: dq30_balance, label: 30+ DPD balance (USD), type: simple, type_params: { measure: dq30_balance_snap },
+      description: Balance of active accounts 30+ days past due, config: { meta: { kind: snapshot, hidden: true } } }
+  - { name: active_balance, label: Active balance (USD), type: simple, type_params: { measure: active_balance_snap },
+      description: Balance of active accounts, config: { meta: { kind: snapshot, hidden: true } } }
+  - { name: cycle_balance, label: Cycle balances summed (USD), type: simple, type_params: { measure: cycle_balance_sum },
+      description: Statement balances summed over every cycle in the period, config: { meta: { kind: flow, hidden: true } } }
+  - { name: paid_min_accounts, label: Accounts paying the minimum, type: simple, type_params: { measure: paid_min_accounts_snap },
+      description: Accounts whose payment covered the previous minimum due, config: { meta: { kind: snapshot, hidden: true } } }
+  - { name: min_due_accounts, label: Accounts with a minimum due, type: simple, type_params: { measure: min_due_accounts_snap },
+      description: Accounts with a minimum due from the previous statement, config: { meta: { kind: snapshot, hidden: true } } }
+  - { name: apr_x_balance, label: APR x balance, type: simple, type_params: { measure: apr_x_balance_snap },
+      description: APR times positive balance, config: { meta: { kind: snapshot, hidden: true } } }
+  - { name: positive_balance, label: Positive balance (USD), type: simple, type_params: { measure: positive_balance_snap },
+      description: Positive statement balance, config: { meta: { kind: snapshot, hidden: true } } }

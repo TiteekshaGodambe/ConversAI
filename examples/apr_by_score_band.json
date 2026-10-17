@@ -1,0 +1,2 @@
+{"metrics": ["balance_weighted_apr", "avg_purchase_apr", "accounts"], "group_by": ["account_cycle__bureau_score_band"],
+ "order_by": ["account_cycle__bureau_score_band"]}

@@ -1,0 +1,9 @@
+# MetricFlow renders SQL in this adapter's dialect (DuckDB). The engine then binds
+# physical tables and translates to each target's dialect (see targets.yaml).
+conversai:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../warehouse/cards.duckdb
+      threads: 1

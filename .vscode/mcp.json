@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "conversai-cloud": {
+      "type": "http",
+      "url": "https://conversai-mcp-w73zfflpqq-uc.a.run.app/mcp"
+    }
+  }
+}
